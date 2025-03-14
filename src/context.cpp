@@ -16,5 +16,13 @@ void TVCContext::init() {
 }
 
 void TVCContext::update() {
-    pressure_sensor.fetch();
+    pressure_sensor.fetch(sensor_packet_queue);
+    while (!sensor_packet_queue.empty()) {
+        SensorPacket packet = sensor_packet_queue.front();
+        Serial.print("P: ");
+        Serial.println(packet.pressure);
+        Serial.print("T: ");
+        Serial.println(packet.temperature);
+        sensor_packet_queue.pop();
+    }
 }

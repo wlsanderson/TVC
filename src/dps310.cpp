@@ -1,7 +1,7 @@
 #include "dps310.h"
 #include "constants.h"
 #include "spi_utils.h"
-#include "dps310_packet.h"
+#include "sensor_packet.h"
 
 
 void DPS310::init() {
@@ -19,17 +19,20 @@ void DPS310::init() {
     get_calibration_coefs();
 }
 
-void DPS310::fetch() {
+void DPS310::fetch(std::queue<SensorPacket>& packet_queue) {
     uint8_t fifo_empty = readRegister(FIFO_STS, CS_PIN_DPS310) & 0x01; // LSB determines if empty or not
     int max_reads = dps310_sensor_buffer / 2; // FIFO buffer size is 32, dont loop more than 32 times
     while (!fifo_empty && max_reads-- > 0) {
-        DPS310Packet packet;
+        SensorPacket packet;
+        packet.timestamp = micros();
         for (int i=0; i < 2; i++) {
             
             int32_t value = read_next();
-            if (value == 0xFF800000) { // default value if the fifo is empty
+            if (value == 0x800000) { // default value if the fifo is empty
                 break;
             }
+            if (value & 0x800000) value |= 0xFF000000; // two's complement
+
             if (value & 0x01) { // LSB = 1 -> pressure measurement
                 raw_pressure = value;
                 packet.pressure = calculate_pressure();
@@ -39,27 +42,20 @@ void DPS310::fetch() {
             }
             fifo_empty = readRegister(FIFO_STS, CS_PIN_DPS310) & 0x01;
         }
-        Serial.print("P: ");
-        Serial.println(packet.pressure); 
-        Serial.print("T: ");
-        Serial.println(packet.temperature);
+        packet_queue.push(packet);
     }
 }
 
 int32_t DPS310::read_next() {
     uint8_t pt_bytes[3];
     readRegisters(0x00, pt_bytes, 3, CS_PIN_DPS310);
-    // two's complement
+    
     int32_t value = (int32_t)((pt_bytes[0] << 16) | (pt_bytes[1] << 8) | pt_bytes[2]);
-    if (value & 0x800000) value |= 0xFF000000;
-
-    if (value == 0xFF800000) { // default value if fifo is empty
+    if (value == 0x800000) { // default value if fifo is empty
         delay(10); // TODO: this is really bad and unreliable
         uint8_t pt_bytes[3];
         readRegisters(0x00, pt_bytes, 3, CS_PIN_DPS310);
-        // two's complement
         value = (int32_t)((pt_bytes[0] << 16) | (pt_bytes[1] << 8) | pt_bytes[2]);
-        if (value & 0x800000) value |= 0xFF000000;
     }
     return value;
 }

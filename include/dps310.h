@@ -1,11 +1,13 @@
-#include <stdint.h>
-
 #pragma once
+#include <stdint.h>
+#include <queue>
+#include "sensor_packet.h"
 
 class DPS310 {
     public:
         void init();
-        void fetch();
+        void fetch(std::queue<SensorPacket>&);
+        
     private:
         int raw_temp {0};
         int raw_pressure {0};
