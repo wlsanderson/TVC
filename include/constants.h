@@ -1,10 +1,9 @@
 #pragma once
 #include <stdint.h>
-#include <Arduino.h>
 #include <SPI.h>
 
 // Pins
-const int CS_PIN = 10;
+const int CS_PIN_DPS310 = 10;
 
 // SPI
 const int SPI_SPEED = 10000000;
@@ -23,3 +22,4 @@ const int NUM_ADDR_COEFS = 18; // number of calibration coefficient addresses fo
 const int NUM_COEFS = 9; // number of calibration coefficients for DPS310
 const int kP = 524288;
 const int kT = 524288;
+const int dps310_sensor_buffer = 32; // the internal fifo stores 32 shared pressure/temp slots

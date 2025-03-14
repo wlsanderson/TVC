@@ -1,7 +1,7 @@
 #pragma once
 
-struct DPS310Packet {
-    unsigned int delta_time {};
+struct SensorPacket {
+    unsigned long timestamp {};
     float pressure {};
     float temperature {};
 };
