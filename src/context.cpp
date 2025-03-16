@@ -23,11 +23,16 @@ void TVCContext::init() {
     // initialize sensors
     imu.init();
     pressure_sensor.init();
+
+    delay(100);
+    imu.fetch(sensor_packet_queue);
     
 }
 
 void TVCContext::update() {
     pressure_sensor.fetch(sensor_packet_queue);
+    
+
     while (!sensor_packet_queue.empty()) {
         SensorPacket packet = sensor_packet_queue.front();
         Serial.print("P: ");

@@ -15,7 +15,7 @@ void IMU::init() {
     FIFO_EN: enables FIFO: 1
     STOP_ON_FTH: Enables FIFO threshold usage: 0
     */
-    i2c_write_register(imu_addr, CTRL_REG9, 0b00010010);
+    i2c_write_register(imu_addr, CTRL_REG9, 0b00000010);
 
     /*
     MAG
@@ -40,4 +40,28 @@ void IMU::init() {
     i2c_write_register(mag_addr, CTRL_REG1_M, 0b11001100); // 5hz Mag ODR, High-performance mode
     i2c_write_register(mag_addr, CTRL_REG4_M, 0b00001000); // High-performance mode
 
+}
+
+void IMU::fetch(std::queue<SensorPacket>& packet_queue) {
+    Serial.println(i2c_read_register(imu_addr, 0x2F), BIN);
+    uint8_t bytes[6];
+    i2c_read_registers(imu_addr, OUT_X_G, bytes, 6);
+    int16_t gx = (int16_t)(bytes[1] << 8) | bytes[0];
+    int16_t gy = (int16_t)(bytes[3] << 8) | bytes[2];
+    int16_t gz = (int16_t)(bytes[5] << 8) | bytes[4];
+    Serial.println(i2c_read_register(imu_addr, 0x2F), BIN);
+
+    uint8_t bytes_a[6];
+    i2c_read_registers(imu_addr, 0x28, bytes_a, 6);
+    int16_t ax = (int16_t)(bytes_a[1] << 8) | bytes_a[0];
+    int16_t ay = (int16_t)(bytes_a[3] << 8) | bytes_a[2];
+    int16_t az = (int16_t)(bytes_a[5] << 8) | bytes_a[4];
+    Serial.println(i2c_read_register(imu_addr, 0x2F), BIN);
+    Serial.println();
+    Serial.println((float)(gx)*gyro_scale_factor);
+    Serial.println((float)(gy)*gyro_scale_factor);
+    Serial.println((float)(gz)*gyro_scale_factor);
+    Serial.println((float)(ax)*acc_scale_factor);
+    Serial.println((float)(ay)*acc_scale_factor);
+    Serial.println((float)(az)*acc_scale_factor);
 }

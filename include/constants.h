@@ -36,9 +36,13 @@ const uint8_t STATUS_REG = 0x17;
 const uint8_t CTRL_REG9 = 0x23;
 const uint8_t CTRL_REG6_XL = 0x1F;
 const uint8_t FIFO_CTRL = 0x2E;
+const uint8_t OUT_X_G = 0x18; // start of burst read for acc + gyro
 
 const uint8_t CTRL_REG1_M = 0x20;
 const uint8_t CTRL_REG3_M = 0x22;
 const uint8_t CTRL_REG4_M = 0x23;
 const uint8_t STATUS_REG_M = 0x27; 
 
+// LSM9DS1 Constants
+const float gyro_scale_factor = 0.07; // at 2000 dps, 70 mdps/LSB
+const float acc_scale_factor = 0.000732; // at 16g, 0.732 mg/LSB
