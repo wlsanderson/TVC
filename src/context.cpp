@@ -3,16 +3,27 @@
 #include "spi_utils.h"
 
 void TVCContext::init() {
-    // setup Serial, SPI, pinouts
+    // setup Serial, SPI, I2C, pinouts
     Serial.begin(9600);
     while (!Serial) {
         delay(50);
     }
     SPI.begin();
+    Wire.begin();
+    Wire.setClock(i2c_speed);
+    // pressure sensor
     pinMode(CS_PIN_DPS310, OUTPUT);
+    digitalWrite(CS_PIN_DPS310, LOW);
+    delay(10);
+    digitalWrite(CS_PIN_DPS310, HIGH);
+
+
+    delay(100);
 
     // initialize sensors
+    imu.init();
     pressure_sensor.init();
+    
 }
 
 void TVCContext::update() {

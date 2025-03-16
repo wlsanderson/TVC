@@ -1,5 +1,6 @@
 #pragma once
 #include "dps310.h"
+#include "imu.h"
 #include "sensor_packet.h"
 
 class TVCContext {
@@ -8,5 +9,6 @@ class TVCContext {
         void update();
         std::queue<SensorPacket> sensor_packet_queue; 
     private:
-        DPS310 pressure_sensor {};
+        DPS310 pressure_sensor;
+        IMU imu;
 };

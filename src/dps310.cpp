@@ -5,22 +5,23 @@
 
 
 void DPS310::init() {
-    while (!(readRegister(MEAS_CFG, CS_PIN_DPS310) & 0x80)) {
-        delay(20);
+    Serial.println(spi_read_register(ID, CS_PIN_DPS310));
+    while (!(spi_read_register(MEAS_CFG, CS_PIN_DPS310) & 0x80)) {
+        delay(1500);
         Serial.println("waiting on calibration coefficients");
     }
-    const uint8_t TMP_COEF_SRCE = readRegister(0x28, CS_PIN_DPS310) >> 7;
-    writeRegister(PRS_CFG, 0B00100000, CS_PIN_DPS310); // sets to 8hz, no oversampling
+    const uint8_t TMP_COEF_SRCE = spi_read_register(0x28, CS_PIN_DPS310) >> 7;
+    spi_write_register(PRS_CFG, 0B00100000, CS_PIN_DPS310); // sets to 8hz, no oversampling
     uint8_t tmp_conf = 0b00100000;
     if (TMP_COEF_SRCE) tmp_conf |= 0x80;
-    writeRegister(TMP_CFG, tmp_conf, CS_PIN_DPS310);
-    writeRegister(CFG_REG, 0b00000010, CS_PIN_DPS310); // no FIFO, no bit shifting, no interrupts
-    writeRegister(MEAS_CFG, 0b00000111, CS_PIN_DPS310);
+    spi_write_register(TMP_CFG, tmp_conf, CS_PIN_DPS310);
+    spi_write_register(CFG_REG, 0b00000010, CS_PIN_DPS310); // no FIFO, no bit shifting, no interrupts
+    spi_write_register(MEAS_CFG, 0b00000111, CS_PIN_DPS310);
     get_calibration_coefs();
 }
 
 void DPS310::fetch(std::queue<SensorPacket>& packet_queue) {
-    uint8_t fifo_empty = readRegister(FIFO_STS, CS_PIN_DPS310) & 0x01; // LSB determines if empty or not
+    uint8_t fifo_empty = spi_read_register(FIFO_STS, CS_PIN_DPS310) & 0x01; // LSB determines if empty or not
     int max_reads = dps310_sensor_buffer / 2; // FIFO buffer size is 32, dont loop more than 32 times
     while (!fifo_empty && max_reads-- > 0) {
         SensorPacket packet;
@@ -40,7 +41,7 @@ void DPS310::fetch(std::queue<SensorPacket>& packet_queue) {
                 raw_temp = value;
                 packet.temperature = calculate_temp();
             }
-            fifo_empty = readRegister(FIFO_STS, CS_PIN_DPS310) & 0x01;
+            fifo_empty = spi_read_register(FIFO_STS, CS_PIN_DPS310) & 0x01;
         }
         packet_queue.push(packet);
     }
@@ -48,13 +49,13 @@ void DPS310::fetch(std::queue<SensorPacket>& packet_queue) {
 
 int32_t DPS310::read_next() {
     uint8_t pt_bytes[3];
-    readRegisters(0x00, pt_bytes, 3, CS_PIN_DPS310);
+    spi_read_registers(0x00, pt_bytes, 3, CS_PIN_DPS310);
     
     int32_t value = (int32_t)((pt_bytes[0] << 16) | (pt_bytes[1] << 8) | pt_bytes[2]);
     if (value == 0x800000) { // default value if fifo is empty
         delay(10); // TODO: this is really bad and unreliable
         uint8_t pt_bytes[3];
-        readRegisters(0x00, pt_bytes, 3, CS_PIN_DPS310);
+        spi_read_registers(0x00, pt_bytes, 3, CS_PIN_DPS310);
         value = (int32_t)((pt_bytes[0] << 16) | (pt_bytes[1] << 8) | pt_bytes[2]);
     }
     return value;
@@ -73,7 +74,7 @@ float DPS310::calculate_temp() {
 
 void DPS310::get_calibration_coefs() {
     uint8_t raw_coef_buffer[NUM_ADDR_COEFS];
-    readRegisters(0x10, raw_coef_buffer, NUM_ADDR_COEFS, CS_PIN_DPS310);
+    spi_read_registers(0x10, raw_coef_buffer, NUM_ADDR_COEFS, CS_PIN_DPS310);
 
     c0 = (int16_t)((raw_coef_buffer[0] << 4) | ((raw_coef_buffer[1] >> 4) & 0x0F));
     if (c0 & 0x0800) c0 |= 0xF000;

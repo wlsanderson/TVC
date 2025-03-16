@@ -1,12 +1,16 @@
 #pragma once
 #include <stdint.h>
 #include <SPI.h>
+#include <Wire.h>
 
 // Pins
 const int CS_PIN_DPS310 = 10;
 
 // SPI
-const int SPI_SPEED = 10000000;
+const int spi_speed = 10000000;
+
+// I2C
+const int i2c_speed = 400000;
 
 // DPS310 Registers
 const uint8_t READ = 0x80;
@@ -23,3 +27,18 @@ const int NUM_COEFS = 9; // number of calibration coefficients for DPS310
 const int kP = 524288;
 const int kT = 524288;
 const int dps310_sensor_buffer = 32; // the internal fifo stores 32 shared pressure/temp slots
+
+// LSM9DS1 Registers
+const uint8_t imu_addr = 0x6B;
+const uint8_t mag_addr = 0x1E;
+const uint8_t CTRL_REG1_G = 0x10;
+const uint8_t STATUS_REG = 0x17;
+const uint8_t CTRL_REG9 = 0x23;
+const uint8_t CTRL_REG6_XL = 0x1F;
+const uint8_t FIFO_CTRL = 0x2E;
+
+const uint8_t CTRL_REG1_M = 0x20;
+const uint8_t CTRL_REG3_M = 0x22;
+const uint8_t CTRL_REG4_M = 0x23;
+const uint8_t STATUS_REG_M = 0x27; 
+
