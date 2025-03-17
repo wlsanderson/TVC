@@ -10,7 +10,7 @@ const int CS_PIN_DPS310 = 10;
 const int spi_speed = 10000000;
 
 // I2C
-const int i2c_speed = 400000;
+const int i2c_speed = 100000;
 
 // DPS310 Registers
 const uint8_t READ = 0x80;
@@ -34,8 +34,9 @@ const uint8_t mag_addr = 0x1E;
 const uint8_t CTRL_REG1_G = 0x10;
 const uint8_t STATUS_REG = 0x17;
 const uint8_t CTRL_REG9 = 0x23;
-const uint8_t CTRL_REG6_XL = 0x1F;
+const uint8_t CTRL_REG6_XL = 0x20;
 const uint8_t FIFO_CTRL = 0x2E;
+const uint8_t FIFO_SRC = 0x2F;
 const uint8_t OUT_TEMP = 0x15; // start of burst read for temperature
 const uint8_t OUT_X_G = 0x18; // start of burst read for acc + gyro
 
