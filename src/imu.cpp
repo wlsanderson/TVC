@@ -15,7 +15,7 @@ void IMU::init() {
     FIFO_EN: enables FIFO: 1
     STOP_ON_FTH: Enables FIFO threshold usage: 0
     */
-    i2c_write_register(imu_addr, CTRL_REG9, 0b00000010);
+    i2c_write_register(imu_addr, CTRL_REG9, 0b00010010);
 
     /*
     MAG
@@ -43,25 +43,31 @@ void IMU::init() {
 }
 
 void IMU::fetch(std::queue<SensorPacket>& packet_queue) {
-    Serial.println(i2c_read_register(imu_addr, 0x2F), BIN);
-    uint8_t bytes[6];
-    i2c_read_registers(imu_addr, OUT_X_G, bytes, 6);
-    int16_t gx = (int16_t)(bytes[1] << 8) | bytes[0];
-    int16_t gy = (int16_t)(bytes[3] << 8) | bytes[2];
-    int16_t gz = (int16_t)(bytes[5] << 8) | bytes[4];
-    Serial.println(i2c_read_register(imu_addr, 0x2F), BIN);
+    // read temp
+    uint8_t bytes_t[2];
+    i2c_read_registers(imu_addr, OUT_TEMP, bytes_t, 2);
+    int16_t temp = (int16_t)(bytes_t[1] << 8) | bytes_t[0];
+    
+    // read gyro
+    uint8_t bytes_g[6]; 
+    // i2c_read_registers(imu_addr, OUT_X_G, bytes_g, 6);
+    int16_t gx = (int16_t)(bytes_g[1] << 8) | bytes_g[0];
+    int16_t gy = (int16_t)(bytes_g[3] << 8) | bytes_g[2];
+    int16_t gz = (int16_t)(bytes_g[5] << 8) | bytes_g[4];
 
+    // read accel
     uint8_t bytes_a[6];
-    i2c_read_registers(imu_addr, 0x28, bytes_a, 6);
+    // i2c_read_registers(imu_addr, 0x28, bytes_a, 6);
     int16_t ax = (int16_t)(bytes_a[1] << 8) | bytes_a[0];
     int16_t ay = (int16_t)(bytes_a[3] << 8) | bytes_a[2];
     int16_t az = (int16_t)(bytes_a[5] << 8) | bytes_a[4];
-    Serial.println(i2c_read_register(imu_addr, 0x2F), BIN);
-    Serial.println();
-    Serial.println((float)(gx)*gyro_scale_factor);
-    Serial.println((float)(gy)*gyro_scale_factor);
-    Serial.println((float)(gz)*gyro_scale_factor);
-    Serial.println((float)(ax)*acc_scale_factor);
-    Serial.println((float)(ay)*acc_scale_factor);
-    Serial.println((float)(az)*acc_scale_factor);
+
+    
+    Serial.println(temp);
+    // Serial.println((float)(gx)*gyro_scale_factor);
+    // Serial.println((float)(gy)*gyro_scale_factor);
+    // Serial.println((float)(gz)*gyro_scale_factor);
+    // Serial.println((float)(ax)*acc_scale_factor);
+    // Serial.println((float)(ay)*acc_scale_factor);
+    // Serial.println((float)(az)*acc_scale_factor);
 }

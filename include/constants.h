@@ -36,6 +36,7 @@ const uint8_t STATUS_REG = 0x17;
 const uint8_t CTRL_REG9 = 0x23;
 const uint8_t CTRL_REG6_XL = 0x1F;
 const uint8_t FIFO_CTRL = 0x2E;
+const uint8_t OUT_TEMP = 0x15; // start of burst read for temperature
 const uint8_t OUT_X_G = 0x18; // start of burst read for acc + gyro
 
 const uint8_t CTRL_REG1_M = 0x20;
