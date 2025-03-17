@@ -48,3 +48,4 @@ const uint8_t STATUS_REG_M = 0x27;
 // LSM9DS1 Constants
 const float gyro_scale_factor = 0.07; // at 2000 dps, 70 mdps/LSB
 const float acc_scale_factor = 0.000732; // at 16g, 0.732 mg/LSB
+const float mag_scale_factor = 0.00014; // at 4gauss, 0.14 mgauss/LSB

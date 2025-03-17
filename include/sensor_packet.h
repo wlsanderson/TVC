@@ -1,14 +1,16 @@
 #pragma once
 
 struct SensorPacket {
-    unsigned long timestamp;
-    float pressure;
-    float temperature;
-    float gyro_x;
-    float gyro_y;
-    float gyro_z;
-    float acc_x;
-    float acc_y;
-    float acc_z;
-    
+    unsigned long timestamp = 0.0;
+    float pressure = 0.0;
+    float temperature = 0.0;
+    float gyro_x = 0.0;
+    float gyro_y = 0.0;
+    float gyro_z = 0.0;
+    float acc_x = 0.0;
+    float acc_y = 0.0;
+    float acc_z = 0.0;
+    float mag_x = 0.0;
+    float mag_y = 0.0;
+    float mag_z = 0.0;
 };

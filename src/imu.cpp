@@ -75,3 +75,24 @@ void IMU::fetch(std::queue<SensorPacket>& packet_queue) {
         unread_samples = (i2c_read_register(imu_addr, FIFO_SRC)) & 0x3F;
     }   
 }
+
+void IMU::fetch_mag(std::queue<SensorPacket>& packet_queue) {
+    bool data_available = i2c_read_register(mag_addr, 0x27) & 0x08;
+    while (data_available) {
+        SensorPacket packet;
+        packet.timestamp = micros();
+        uint8_t bytes[6];
+        i2c_read_registers(mag_addr, 0x28, bytes, 6);
+        int16_t mag_x = (int16_t)((bytes[1] << 8) | bytes[0]);
+        int16_t mag_y = (int16_t)((bytes[3] << 8) | bytes[2]);
+        int16_t mag_z = (int16_t)((bytes[5] << 8) | bytes[4]);
+
+        packet.mag_x = (float)(mag_x) * mag_scale_factor;
+        packet.mag_y = (float)(mag_y) * mag_scale_factor;
+        packet.mag_z = (float)(mag_z) * mag_scale_factor;
+
+        packet_queue.push(packet);
+
+        data_available = i2c_read_register(mag_addr, 0x27) & 0x08;
+    }
+}
