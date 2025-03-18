@@ -50,7 +50,6 @@ void DPS310::fetch(std::queue<SensorPacket>& packet_queue) {
 int32_t DPS310::read_next() {
     uint8_t pt_bytes[3];
     spi_read_registers(0x00, pt_bytes, 3, CS_PIN_DPS310);
-    
     int32_t value = (int32_t)((pt_bytes[0] << 16) | (pt_bytes[1] << 8) | pt_bytes[2]);
     if (value == 0x800000) { // default value if fifo is empty
         delay(10); // TODO: this is really bad and unreliable

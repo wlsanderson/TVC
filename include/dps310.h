@@ -9,8 +9,8 @@ class DPS310 {
         void fetch(std::queue<SensorPacket>&);
         
     private:
-        int raw_temp {0};
-        int raw_pressure {0};
+        int raw_temp = 0.0;
+        int raw_pressure = 0.0;
         float calculate_pressure();
         float calculate_temp();
         void get_calibration_coefs();
