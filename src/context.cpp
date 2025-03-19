@@ -17,8 +17,6 @@ void TVCContext::init() {
     delay(10);
     digitalWrite(CS_PIN_DPS310, HIGH);
 
-
-
     // initialize sensors
     imu.init();
     pressure_sensor.init();
@@ -29,7 +27,6 @@ void TVCContext::update() {
     imu.fetch(sensor_packet_queue);
     imu.fetch_mag(sensor_packet_queue);
     
-
     while (!sensor_packet_queue.empty()) {
         SensorPacket packet = sensor_packet_queue.front();
         Serial.println();

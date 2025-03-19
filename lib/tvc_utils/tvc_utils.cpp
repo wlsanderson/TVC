@@ -28,6 +28,8 @@ int32_t twos_complement_20_lo(uint8_t msb_4, uint8_t lsb_8, uint8_t xlsb_8) {
     return val;
 }
 int32_t twos_complement_24(uint8_t msb, uint8_t lsb, uint8_t xlsb) {
-    return (int32_t)((msb << 16) | (lsb << 8) | xlsb);
+    int32_t val = (int32_t)((msb << 16) | (lsb << 8) | xlsb);
+    if (val & 0x00800000) val |= 0xFF000000;
+    return val;
 }
 

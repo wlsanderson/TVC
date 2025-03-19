@@ -5,16 +5,17 @@
 
 class DPS310 {
     public:
+        DPS310(int CS_pin);
         void init();
         void fetch(std::queue<SensorPacket>&);
         
     private:
+        int CS_pin = -1;
         int raw_temp = 0.0;
         int raw_pressure = 0.0;
         float calculate_pressure();
         float calculate_temp();
         void get_calibration_coefs();
-        int32_t read_next();
         int16_t c0;
         int16_t c1;
         int32_t c10;

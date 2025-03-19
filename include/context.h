@@ -1,5 +1,5 @@
 #pragma once
-#include "dps310.h"
+#include <dps310.h>
 #include "imu.h"
 #include "sensor_packet.h"
 
