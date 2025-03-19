@@ -1,18 +1,11 @@
 #pragma once
 #include <stdint.h>
-#include <SPI.h>
+
 #include <Wire.h>
 
-// Pins
-const int CS_PIN_DPS310 = 10;
-
-// SPI
-const int spi_speed = 10000000;
 
 // I2C
-const int i2c_speed = 100000;
-
-
+constexpr int i2c_speed = 100000;
 
 // LSM9DS1 Registers
 constexpr uint8_t imu_addr = 0x6B;

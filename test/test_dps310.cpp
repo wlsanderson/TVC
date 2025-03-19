@@ -1,11 +1,7 @@
-#include "dps310.h"
+#include <ArduinoFake.h>
 #include <gtest/gtest.h>
+#include <dps310.h>
 
-DPS310 dps310;
-
-TEST(dps310, testTest) {
-    
-}
 
 // void setUp(void) {
 //     // set stuff up here

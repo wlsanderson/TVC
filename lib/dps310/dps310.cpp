@@ -1,5 +1,3 @@
-#include <Arduino.h>
-
 #include <tvc_utils.h>
 #include <dps310.h>
 #include <spi_utils.h>
@@ -10,27 +8,27 @@
 
 
 DPS310::DPS310(int CS_pin) {
-    CS_pin = CS_pin;
+    spi = new SPIUtils(spi_speed, read_byte, spi_mode, CS_pin);
 }
 
 void DPS310::init() {
-    Serial.println(spi_read_register(ID, CS_pin));
-    while (!(spi_read_register(MEAS_CFG, CS_pin) & 0x80)) {
+    Serial.println(spi->read_register(ID));
+    while (!(spi->read_register(MEAS_CFG) & 0x80)) {
         delay(1500);
         Serial.println("waiting on calibration coefficients");
     }
-    const uint8_t TMP_COEF_SRCE = spi_read_register(0x28, CS_pin) >> 7;
-    spi_write_register(PRS_CFG, 0B00100000, CS_pin); // sets to 8hz, no oversampling
+    const uint8_t TMP_COEF_SRCE = spi->read_register(0x28) >> 7;
+    spi->write_register(PRS_CFG, 0B00100000); // sets to 8hz, no oversampling
     uint8_t tmp_conf = 0b00100000;
     if (TMP_COEF_SRCE) tmp_conf |= 0x80;
-    spi_write_register(TMP_CFG, tmp_conf, CS_pin);
-    spi_write_register(CFG_REG, 0b00000010, CS_pin); // no , no bit shifting, no interrupts
-    spi_write_register(MEAS_CFG, 0b00000111, CS_pin);
+    spi->write_register(TMP_CFG, tmp_conf);
+    spi->write_register(CFG_REG, 0b00000010); // no , no bit shifting, no interrupts
+    spi->write_register(MEAS_CFG, 0b00000111);
     get_calibration_coefs();
 }
 
 void DPS310::fetch(std::queue<SensorPacket>& packet_queue) {
-    uint8_t data_ready = spi_read_register(MEAS_CFG, CS_pin);
+    uint8_t data_ready = spi->read_register(MEAS_CFG);
     // bit 4 is pressure ready
     // bit 5 is temp ready
     while (data_ready == (data_ready | 0x81)) { // checking if both are ready
@@ -38,7 +36,7 @@ void DPS310::fetch(std::queue<SensorPacket>& packet_queue) {
         packet.timestamp = micros();
         for (int i=0; i < 2; i++) {
             uint8_t bytes[3];
-            spi_read_registers(0x00, bytes, 3, CS_pin);
+            spi->read_registers(0x00, bytes, 3);
             int32_t value = twos_complement_24(bytes[0], bytes[1], bytes[2]);
             // when FIFO is empty, registers will read 0x800000. With two's complement, this will be
             // negative 0x800000
@@ -53,7 +51,7 @@ void DPS310::fetch(std::queue<SensorPacket>& packet_queue) {
                 raw_temp = value;
                 packet.temperature = calculate_temp();
             }
-            data_ready = spi_read_register(MEAS_CFG, CS_pin);
+            data_ready = spi->read_register(MEAS_CFG);
         }
         packet_queue.push(packet);
     }
@@ -72,7 +70,7 @@ float DPS310::calculate_temp() {
 
 void DPS310::get_calibration_coefs() {
     uint8_t raw_coef_buffer[NUM_ADDR_COEFS];
-    spi_read_registers(0x10, raw_coef_buffer, NUM_ADDR_COEFS, CS_pin);
+    spi->read_registers(0x10, raw_coef_buffer, NUM_ADDR_COEFS);
 
     c0 = (int16_t)((raw_coef_buffer[0] << 4) | ((raw_coef_buffer[1] >> 4) & 0x0F));
     if (c0 & 0x0800) c0 |= 0xF000;
@@ -87,4 +85,8 @@ void DPS310::get_calibration_coefs() {
     c20 = (int16_t)((raw_coef_buffer[12] << 8) | raw_coef_buffer[13]);
     c21 = (int16_t)((raw_coef_buffer[14] << 8) | raw_coef_buffer[15]);
     c30 = (int16_t)((raw_coef_buffer[16] << 8) | raw_coef_buffer[17]);
+}
+
+DPS310::~DPS310() {
+    delete spi;
 }

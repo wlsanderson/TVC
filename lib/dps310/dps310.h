@@ -1,15 +1,18 @@
 #pragma once
 #include <stdint.h>
 #include <queue>
-#include "sensor_packet.h"
+
+#include <spi_utils.h>
+#include <sensor_packet.h>
 
 class DPS310 {
     public:
         DPS310(int CS_pin);
+        ~DPS310();
         void init();
         void fetch(std::queue<SensorPacket>&);
-        
     private:
+        SPIUtils* spi;
         int CS_pin = -1;
         int raw_temp = 0.0;
         int raw_pressure = 0.0;

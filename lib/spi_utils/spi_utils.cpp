@@ -1,34 +1,41 @@
-#include "constants.h"
+#include "spi_utils.h"
 
 
-uint8_t spi_read_register(uint8_t addr, uint8_t pin) {
+SPIUtils::SPIUtils(int spi_speed, uint8_t read_byte, int spi_mode, int CS_pin) {
+    spi_speed = spi_speed;
+    read_byte = read_byte;
+    spi_mode = spi_mode;
+    CS_pin = CS_pin;
+}
+
+uint8_t SPIUtils::read_register(uint8_t addr) {
     SPI.beginTransaction(SPISettings(spi_speed, MSBFIRST, SPI_MODE0));
-    digitalWrite(pin, LOW);
-    SPI.transfer(addr | READ);
+    digitalWrite(CS_pin, LOW);
+    SPI.transfer(addr | read_byte);
     uint8_t val = SPI.transfer(0x00);
-    digitalWrite(pin, HIGH);
+    digitalWrite(CS_pin, HIGH);
     SPI.endTransaction();
     return val;
 }
   
-void spi_read_registers(uint8_t start_addr, uint8_t* buffer, int num_bytes, uint8_t pin) {
+void SPIUtils::read_registers(uint8_t start_addr, uint8_t* buffer, int num_bytes) {
     SPI.beginTransaction(SPISettings(spi_speed, MSBFIRST, SPI_MODE0));
-    digitalWrite(pin, LOW);
-    SPI.transfer(start_addr | READ);
+    digitalWrite(CS_pin, LOW);
+    SPI.transfer(start_addr | read_byte);
   
     for (int i = 0; i < num_bytes; i++) {
         buffer[i] = SPI.transfer(0x00);
     }
 
-    digitalWrite(pin, HIGH);
+    digitalWrite(CS_pin, HIGH);
     SPI.endTransaction();
 }
   
-void spi_write_register(uint8_t addr, uint8_t value, uint8_t pin) {
+void SPIUtils::write_register(uint8_t addr, uint8_t value) {
     SPI.beginTransaction(SPISettings(spi_speed, MSBFIRST, SPI_MODE0));
-    digitalWrite(pin, LOW);
+    digitalWrite(CS_pin, LOW);
     SPI.transfer(addr);
     SPI.transfer(value);
-    digitalWrite(pin, HIGH);
+    digitalWrite(CS_pin, HIGH);
     SPI.endTransaction();
 }
