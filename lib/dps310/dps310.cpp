@@ -1,18 +1,23 @@
-#include <tvc_utils.h>
 #include <dps310.h>
-#include <spi_utils.h>
-#include <sensor_packet.h>
 
-#include "dps310_constants.h"
+#include <tvc_utils.h>
 
 
-
+// Constructor for normal use
 DPS310::DPS310(int CS_pin) {
-    spi = new SPIUtils(spi_speed, read_byte, spi_mode, CS_pin);
+    spi = new SPIUtils(spi_speed, read_byte, spi_mode, bit_order, CS_pin);
+    owns_spi = true;
+}
+
+// Constructor for dependency injection
+DPS310::DPS310(SPIUtils* spi_utils) {
+    spi = spi_utils;
+    owns_spi = false;
 }
 
 void DPS310::init() {
-    Serial.println(spi->read_register(ID));
+    uint8_t id = spi->read_register(ID);
+    Serial.println(id);
     while (!(spi->read_register(MEAS_CFG) & 0x80)) {
         delay(1500);
         Serial.println("waiting on calibration coefficients");
@@ -51,9 +56,10 @@ void DPS310::fetch(std::queue<SensorPacket>& packet_queue) {
                 raw_temp = value;
                 packet.temperature = calculate_temp();
             }
-            data_ready = spi->read_register(MEAS_CFG);
+            
         }
         packet_queue.push(packet);
+        data_ready = spi->read_register(MEAS_CFG);
     }
 }
 
@@ -69,24 +75,21 @@ float DPS310::calculate_temp() {
 }
 
 void DPS310::get_calibration_coefs() {
-    uint8_t raw_coef_buffer[NUM_ADDR_COEFS];
-    spi->read_registers(0x10, raw_coef_buffer, NUM_ADDR_COEFS);
-
-    c0 = (int16_t)((raw_coef_buffer[0] << 4) | ((raw_coef_buffer[1] >> 4) & 0x0F));
-    if (c0 & 0x0800) c0 |= 0xF000;
-    c1 = (int16_t)(((raw_coef_buffer[1] & 0x0F) << 8) | raw_coef_buffer[2]);
-    if (c1 & 0x0800) c1 |= 0xF000;
-    c00 = (int32_t)(raw_coef_buffer[3] << 12) | (raw_coef_buffer[4] << 4) | ((raw_coef_buffer[5] >> 4) & 0x0F);
-    if (c00 & 0x080000) c00 |= 0xFFF00000;
-    c10 = (int32_t)((raw_coef_buffer[5] & 0x0F) << 16) | (raw_coef_buffer[6] << 8) | raw_coef_buffer[7];
-    if (c10 & 0x080000) c10 |= 0xFFF00000;
-    c01 = (int16_t)((raw_coef_buffer[8] << 8) | raw_coef_buffer[9]);
-    c11 = (int16_t)((raw_coef_buffer[10] << 8) | raw_coef_buffer[11]);
-    c20 = (int16_t)((raw_coef_buffer[12] << 8) | raw_coef_buffer[13]);
-    c21 = (int16_t)((raw_coef_buffer[14] << 8) | raw_coef_buffer[15]);
-    c30 = (int16_t)((raw_coef_buffer[16] << 8) | raw_coef_buffer[17]);
+    uint8_t raw_coefs[NUM_ADDR_COEFS];
+    spi->read_registers(0x10, raw_coefs, NUM_ADDR_COEFS);
+    c0 = twos_complement_12_hi(raw_coefs[0], raw_coefs[1]);
+    c1 = twos_complement_12_lo(raw_coefs[1], raw_coefs[2]);
+    c00 = twos_complement_20_hi(raw_coefs[3], raw_coefs[4], raw_coefs[5]);
+    c10 = twos_complement_20_lo(raw_coefs[5], raw_coefs[6], raw_coefs[7]);
+    c01 = twos_complement_16(raw_coefs[8], raw_coefs[9]);
+    c11 = twos_complement_16(raw_coefs[10], raw_coefs[11]);
+    c20 = twos_complement_16(raw_coefs[12], raw_coefs[13]);
+    c21 = twos_complement_16(raw_coefs[14], raw_coefs[15]);
+    c30 = twos_complement_16(raw_coefs[16], raw_coefs[17]);
 }
 
 DPS310::~DPS310() {
-    delete spi;
+    if (owns_spi) {
+        delete spi;
+    }
 }
