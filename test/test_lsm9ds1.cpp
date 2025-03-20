@@ -1,7 +1,9 @@
+#include <lsm9ds1.h>
+
+#include <gtest/gtest.h>
 #include <ArduinoFake.h>
 #include <gmock/gmock.h>
-#include <gtest/gtest.h>
-#include <lsm9ds1.h>
+
 
 using namespace fakeit;
 

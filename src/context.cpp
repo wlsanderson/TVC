@@ -16,12 +16,13 @@ void TVCContext::init() {
     digitalWrite(PRESSURE_SENSOR_CS, HIGH);
 
     // initialize sensors
+    pressure_sensor = new DPS310(PRESSURE_SENSOR_CS);
     imu.init();
-    pressure_sensor.init();
+    pressure_sensor->init();
 }
 
 void TVCContext::update() {
-    pressure_sensor.fetch(sensor_packet_queue);
+    pressure_sensor->fetch(sensor_packet_queue);
     imu.fetch_imu(sensor_packet_queue);
     imu.fetch_mag(sensor_packet_queue);
     
@@ -53,4 +54,8 @@ void TVCContext::update() {
         sensor_packet_queue.pop();
     }
 
+}
+
+TVCContext::~TVCContext() {
+    delete pressure_sensor;
 }

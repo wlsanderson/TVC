@@ -1,7 +1,8 @@
 #pragma once
 
 #include <stdint.h>
-#include <SPI.h>
+#include <spi_utils.h>
+
 
 // DPS310 Registers
 constexpr uint8_t read_byte = 0x80;
@@ -13,7 +14,7 @@ constexpr uint8_t CFG_REG = 0x09; // FIFO and interrupt config
 
 // DPS310 Constants
 constexpr int spi_mode = SPI_MODE0;
-constexpr int bit_order = MSBFIRST;
+constexpr BitOrder bit_order = MSBFIRST;
 constexpr int spi_speed = 10000000;
 constexpr int NUM_ADDR_COEFS = 18; // number of calibration coefficient addresses for DPS310 
 constexpr int NUM_COEFS = 9; // number of calibration coefficients for DPS310

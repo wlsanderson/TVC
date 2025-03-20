@@ -12,7 +12,8 @@ class TVCContext {
         void init();
         void update();
         std::queue<SensorPacket> sensor_packet_queue; 
+        ~TVCContext();
     private:
-        DPS310 pressure_sensor;
+        DPS310* pressure_sensor;
         IMU imu;
 };

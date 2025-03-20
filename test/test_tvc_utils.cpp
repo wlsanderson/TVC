@@ -1,5 +1,9 @@
 #include <tvc_utils.h>
+
 #include <gtest/gtest.h>
+#include <ArduinoFake.h>
+
+
 
 TEST(TwosComplement12Hi, PositiveLSBxF0) {
     EXPECT_EQ(twos_complement_12_hi(0b01000111, 0b01000000), 1140);
