@@ -21,6 +21,10 @@ class SPIUtils {
         int spi_mode;
 
         SPIUtils(int spi_speed, uint8_t read_byte, int spi_mode, BitOrder bit_order, int CS_pin);
+         
+        // If not using a virtual destructor, leads to undefined behavior if the base class of
+        // SPIUtils is deleted when SPIUtils has a derived class (like MockSPIUtils)
+        virtual ~SPIUtils() {}
 
         virtual uint8_t read_register(uint8_t addr);
         virtual void read_registers(uint8_t start_addr, uint8_t* buffer, int num_bytes);
