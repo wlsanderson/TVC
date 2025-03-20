@@ -1,7 +1,11 @@
 #pragma once
+#include <Arduino.h>
 #include <dps310.h>
-#include "imu.h"
-#include "sensor_packet.h"
+#include <lsm9ds1.h>
+#include <sensor_packet.h>
+
+#include "constants.h"
+
 
 class TVCContext {
     public:

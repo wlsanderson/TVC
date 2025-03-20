@@ -4,6 +4,8 @@
 #include <i2c_utils.h>
 #include <sensor_packet.h>
 
+#include "lsm9ds1_constants.h"
+
 class IMU {
     public:
         IMU(); // for normal use

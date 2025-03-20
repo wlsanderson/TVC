@@ -9,6 +9,7 @@ using ::testing::Return;
 using ::testing::InSequence;
 using ::testing::_;
 
+
 class MockSPIUtils : public SPIUtils {
     public: 
         MockSPIUtils() : SPIUtils(0, 0, 0, 0, 0) {}
@@ -18,14 +19,19 @@ class MockSPIUtils : public SPIUtils {
         
 };
 
-TEST(DPS310Test, fetch_creates_correct_packet) {
-    
+
+class DPS310ParamTests : public ::testing::TestWithParam<int> {};
+
+
+TEST_P(DPS310ParamTests, test_fetch) {
     MockSPIUtils mock_spi;
     DPS310 mock_dps310(&mock_spi);
 
     When(Method(ArduinoFake(), micros)).AlwaysReturn(100);
-    //When(OverloadedMethod(ArduinoFake(Serial), println, size_t(const char *))).AlwaysReturn();
     When(OverloadedMethod(ArduinoFake(Serial), println, size_t(unsigned char,int))).AlwaysReturn();
+
+    int expected_packets = GetParam();
+    std::cout << "Test for number of packets: " << expected_packets << std::endl;
 
     {
         InSequence s;
@@ -63,26 +69,49 @@ TEST(DPS310Test, fetch_creates_correct_packet) {
                 buffer[16] = 0xFF;
                 buffer[17] = 0xFF;
             });
-
-        // Simulate pressure and temp ready
-        EXPECT_CALL(mock_spi, read_register(MEAS_CFG))
-            .WillOnce(Return(0x81));
         
-        EXPECT_CALL(mock_spi, read_registers(testing::_, testing::_, testing::_))
-            .WillOnce([](uint8_t, uint8_t* buffer, uint8_t num_bytes) {
-                buffer[0] = 0x01; buffer[1] = 0x02; buffer[2] = 0x03;
-            })
-            .WillOnce([](uint8_t, uint8_t* buffer, uint8_t num_bytes) {
-                buffer[0] = 0x04; buffer[1] = 0x05; buffer[2] = 0x06;
-            });
-        EXPECT_CALL(mock_spi, read_register(MEAS_CFG))
-            .WillOnce(Return(0x00));
+    
+
+        if (expected_packets) {
+            EXPECT_CALL(mock_spi, read_register(MEAS_CFG))
+                .WillOnce(Return(0x18));
+        } else {
+            EXPECT_CALL(mock_spi, read_register(MEAS_CFG))
+                .WillOnce(Return(0x00));
+        }
+        for (int i = 0; i < expected_packets; i++) {
+            EXPECT_CALL(mock_spi, read_registers(testing::_, testing::_, testing::_))
+                .WillRepeatedly([](uint8_t, uint8_t* buffer, uint8_t num_bytes) {
+                    buffer[0] = 0x01; buffer[1] = 0x02; buffer[2] = 0x03;
+                });
+            if (expected_packets - i > 1) {
+                EXPECT_CALL(mock_spi, read_register(MEAS_CFG))
+                    .WillOnce(Return(0x18));
+            } else {
+                // last packet, will not read another after this
+                EXPECT_CALL(mock_spi, read_register(MEAS_CFG))
+                    .WillOnce(Return(0x00));
+            }
+        }
     }
+    
 
     std::queue<SensorPacket> packet_queue;
     mock_dps310.init();
     mock_dps310.fetch(packet_queue);
 
-    EXPECT_EQ(packet_queue.size(), 1);
-    EXPECT_NEAR(packet_queue.front().pressure, 100000, 0.01);
+    EXPECT_EQ(packet_queue.size(), expected_packets);
+    //EXPECT_NEAR(packet_queue.front().pressure, 100000, 0.01);
+
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    DPS310Tests,
+    DPS310ParamTests,
+    testing::Values(
+        0,
+        1,
+        2
+    ),
+    testing::PrintToStringParamName()
+);

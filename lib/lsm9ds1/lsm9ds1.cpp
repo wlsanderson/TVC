@@ -1,8 +1,6 @@
 #include <lsm9ds1.h>
 #include <tvc_utils.h>
 
-#include "lsm9ds1_constants.h"
-
 
 // constructor for normal use
 IMU::IMU() {
@@ -23,10 +21,10 @@ void IMU::init() {
     
 
     Serial.print("LSM9DS1 IMU: ");
-    Serial.println(i2c_imu->read_register(0x0F), BIN);
+    Serial.println(i2c_imu->read_register(WHO_AM_I), BIN);
 
     Serial.print("LSM9DS1 MAG: ");
-    Serial.println(i2c_mag->read_register(0x0F), BIN);
+    Serial.println(i2c_mag->read_register(WHO_AM_I_M), BIN);
     /*
     ACC/GYRO:
 
@@ -88,16 +86,16 @@ void IMU::fetch_imu(std::queue<SensorPacket>& packet_queue) {
         packet.acc_z = (float)(az) * acc_scale_factor;
         packet_queue.push(packet);
         unread_samples = (i2c_imu->read_register(FIFO_SRC)) & 0x3F;
-    }   
+    }
 }
 
 void IMU::fetch_mag(std::queue<SensorPacket>& packet_queue) {
-    bool data_available = i2c_mag->read_register(0x27) & 0x08;
+    bool data_available = i2c_mag->read_register(STATUS_REG_M) & 0x08;
     while (data_available) {
         SensorPacket packet;
         packet.timestamp = micros();
         uint8_t bytes[6];
-        i2c_mag->read_registers(0x28, bytes, 6);
+        i2c_mag->read_registers(OUT_X_L_M, bytes, 6);
         int16_t mag_x = twos_complement_16(bytes[1], bytes[0]);
         int16_t mag_y = twos_complement_16(bytes[3], bytes[2]);
         int16_t mag_z = twos_complement_16(bytes[5], bytes[4]);
@@ -108,7 +106,7 @@ void IMU::fetch_mag(std::queue<SensorPacket>& packet_queue) {
 
         packet_queue.push(packet);
 
-        data_available = i2c_mag->read_register(0x27) & 0x08;
+        data_available = i2c_mag->read_register(STATUS_REG_M) & 0x08;
     }
 }
 

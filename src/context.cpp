@@ -1,6 +1,4 @@
 #include "context.h"
-#include "constants.h"
-#include "spi_utils.h"
 
 void TVCContext::init() {
     // setup Serial, SPI, I2C, pinouts
@@ -12,10 +10,10 @@ void TVCContext::init() {
     Wire.begin();
     Wire.setClock(i2c_speed);
     // pressure sensor
-    pinMode(CS_PIN_DPS310, OUTPUT);
-    digitalWrite(CS_PIN_DPS310, LOW);
+    pinMode(PRESSURE_SENSOR_CS, OUTPUT);
+    digitalWrite(PRESSURE_SENSOR_CS, LOW);
     delay(10);
-    digitalWrite(CS_PIN_DPS310, HIGH);
+    digitalWrite(PRESSURE_SENSOR_CS, HIGH);
 
     // initialize sensors
     imu.init();
@@ -24,7 +22,7 @@ void TVCContext::init() {
 
 void TVCContext::update() {
     pressure_sensor.fetch(sensor_packet_queue);
-    imu.fetch(sensor_packet_queue);
+    imu.fetch_imu(sensor_packet_queue);
     imu.fetch_mag(sensor_packet_queue);
     
     while (!sensor_packet_queue.empty()) {

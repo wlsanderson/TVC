@@ -36,7 +36,7 @@ void DPS310::fetch(std::queue<SensorPacket>& packet_queue) {
     uint8_t data_ready = spi->read_register(MEAS_CFG);
     // bit 4 is pressure ready
     // bit 5 is temp ready
-    while (data_ready == (data_ready | 0x81)) { // checking if both are ready
+    while (data_ready == (data_ready | 0x18)) { // checking if both are ready
         SensorPacket packet;
         packet.timestamp = micros();
         for (int i=0; i < 2; i++) {
