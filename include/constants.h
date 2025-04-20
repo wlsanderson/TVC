@@ -1,3 +1,3 @@
 // Pinouts
 
-constexpr int PRESSURE_SENSOR_CS = 1;
+constexpr int PRESSURE_SENSOR_CS = 10;
