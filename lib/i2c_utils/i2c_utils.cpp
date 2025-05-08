@@ -1,8 +1,8 @@
 #include <i2c_utils.h>
 
-I2CUtils::I2CUtils(uint8_t device_addr, int i2c_speed) {
-    device_addr = device_addr;
-    i2c_speed = i2c_speed;
+void I2CUtils::init(uint8_t i2c_device_addr, int i2c_speed_hz) {
+    this->device_addr = i2c_device_addr;
+    this->i2c_speed = i2c_speed_hz;
 }
 
 uint8_t I2CUtils::read_register(uint8_t reg_addr) {

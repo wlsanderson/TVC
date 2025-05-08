@@ -7,8 +7,7 @@ int16_t twos_complement_12_hi(uint8_t msb_8, uint8_t lsb_4) {
     return val;
 }
 int16_t twos_complement_12_lo(uint8_t msb_4, uint8_t lsb_8) {
-    if (msb_4 & 0xF0) msb_4 >>= 4;
-    int16_t val = (int16_t)((msb_4 << 8) | lsb_8);
+    int16_t val = (int16_t)(((msb_4 & 0x0F) << 8) | lsb_8);
     if (val & 0x0800) val |= 0xF000;
     return val;
 }
@@ -22,8 +21,7 @@ int32_t twos_complement_20_hi(uint8_t msb_8, uint8_t lsb_8, uint8_t xlsb_4) {
     return val;
 }
 int32_t twos_complement_20_lo(uint8_t msb_4, uint8_t lsb_8, uint8_t xlsb_8) {
-    if (msb_4 & 0xF0) msb_4 >>= 4;
-    int32_t val = (int32_t)((msb_4 << 16) | (lsb_8 << 8) | xlsb_8);
+    int32_t val = (int32_t)(((msb_4 & 0x0F) << 16) | (lsb_8 << 8) | xlsb_8);
     if (val & 0x00080000) val |= 0xFFF00000;
     return val;
 }
