@@ -1,12 +1,12 @@
 #include "spi_utils.h"
 
 
-SPIUtils::SPIUtils(int spi_speed, uint8_t read_byte, int spi_mode, BitOrder bit_order, int CS_pin) {
-    spi_speed = spi_speed;
-    read_byte = read_byte;
-    spi_mode = spi_mode;
-    bit_order = bit_order;
-    CS_pin = CS_pin;
+void SPIUtils::init(int spi_speed_hz, uint8_t spi_read_byte, int mode, BitOrder spi_bit_order, int spi_CS_pin) {
+    this->spi_speed = spi_speed_hz;
+    this->read_byte = spi_read_byte;
+    this->spi_mode = mode;
+    this->bit_order = spi_bit_order;
+    this->CS_pin = spi_CS_pin;
 }
 
 uint8_t SPIUtils::read_register(uint8_t addr) {

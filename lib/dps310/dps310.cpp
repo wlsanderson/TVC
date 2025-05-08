@@ -1,67 +1,42 @@
 #include <dps310.h>
 
-#include <tvc_utils.h>
-
-
-// Constructor for normal use
-DPS310::DPS310(int CS_pin) {
-    spi = new SPIUtils(spi_speed, read_byte, spi_mode, bit_order, CS_pin);
-    owns_spi = true;
-}
-
-// Constructor for dependency injection
-DPS310::DPS310(SPIUtils* spi_utils) {
-    spi = spi_utils;
-    owns_spi = false;
-}
 
 void DPS310::init() {
-    uint8_t id = spi->read_register(ID);
+    i2c.init(dps310_device_addr, dps310_i2c_speed);
+
+    
+    uint8_t id = i2c.read_register(ID);
+    Serial.print("DPS310 ID (16 expected): ");
     Serial.println(id);
-    while (!(spi->read_register(MEAS_CFG) & 0x80)) {
-        delay(1500);
+    
+    while (!(i2c.read_register(MEAS_CFG) & 0x80)) {
+        delay(1000);
         Serial.println("waiting on calibration coefficients");
     }
-    const uint8_t TMP_COEF_SRCE = spi->read_register(0x28) >> 7;
-    spi->write_register(PRS_CFG, 0B00100000); // sets to 8hz, no oversampling
-    uint8_t tmp_conf = 0b00100000;
+    
+    // Interrupt active low, generate interrupt when pressure ready, no bit shifts, disable fifo
+    i2c.write_register(CFG_REG, 0b00110000);
+
+    // 0 if using ASIC temperature sensor, 1 if using MEMS element temp sensor 
+    const uint8_t TMP_COEF_SRCE = i2c.read_register(0x28) >> 7;
+
+    i2c.write_register(PRS_CFG, 0b01110000); // sets to 128hz, no oversampling
+
+    // 128hz temp, set which temperature source is used
+    uint8_t tmp_conf = 0b01110000;
     if (TMP_COEF_SRCE) tmp_conf |= 0x80;
-    spi->write_register(TMP_CFG, tmp_conf);
-    spi->write_register(CFG_REG, 0b00000010); // no , no bit shifting, no interrupts
-    spi->write_register(MEAS_CFG, 0b00000111);
+    i2c.write_register(TMP_CFG, tmp_conf);
+
+    // continuous pressure and temp measurements
+    i2c.write_register(MEAS_CFG, 0b00000111);
+
+    // flush fifo
+    i2c.write_register(0x0C, 0x80);
+    i2c.read_register(INT_STS);
     get_calibration_coefs();
 }
 
-void DPS310::fetch(std::queue<SensorPacket>& packet_queue) {
-    uint8_t data_ready = spi->read_register(MEAS_CFG);
-    // bit 4 is pressure ready
-    // bit 5 is temp ready
-    while (data_ready == (data_ready | 0x18)) { // checking if both are ready
-        SensorPacket packet;
-        packet.timestamp = micros();
-        for (int i=0; i < 2; i++) {
-            uint8_t bytes[3];
-            spi->read_registers(0x00, bytes, 3);
-            int32_t value = twos_complement_24(bytes[0], bytes[1], bytes[2]);
-            // when FIFO is empty, registers will read 0x800000. With two's complement, this will be
-            // negative 0x800000
-            if (value == -0x800000) { // default value if the fifo is empty
-                break;
-            }
 
-            if (bytes[2] & 0x01) { // LSB = 1 -> pressure measurement
-                raw_pressure = value;
-                packet.pressure = calculate_pressure();
-            } else { // LSB = 0 -> temperature measurement
-                raw_temp = value;
-                packet.temperature = calculate_temp();
-            }
-            
-        }
-        packet_queue.push(packet);
-        data_ready = spi->read_register(MEAS_CFG);
-    }
-}
 
 float DPS310::calculate_pressure() {
     float T_raw_sc = (float)raw_temp / kT;
@@ -76,7 +51,7 @@ float DPS310::calculate_temp() {
 
 void DPS310::get_calibration_coefs() {
     uint8_t raw_coefs[NUM_ADDR_COEFS];
-    spi->read_registers(0x10, raw_coefs, NUM_ADDR_COEFS);
+    i2c.read_registers(0x10, raw_coefs, NUM_ADDR_COEFS);
     c0 = twos_complement_12_hi(raw_coefs[0], raw_coefs[1]);
     c1 = twos_complement_12_lo(raw_coefs[1], raw_coefs[2]);
     c00 = twos_complement_20_hi(raw_coefs[3], raw_coefs[4], raw_coefs[5]);
@@ -86,10 +61,4 @@ void DPS310::get_calibration_coefs() {
     c20 = twos_complement_16(raw_coefs[12], raw_coefs[13]);
     c21 = twos_complement_16(raw_coefs[14], raw_coefs[15]);
     c30 = twos_complement_16(raw_coefs[16], raw_coefs[17]);
-}
-
-DPS310::~DPS310() {
-    if (owns_spi) {
-        delete spi;
-    }
 }
