@@ -1,7 +1,8 @@
 #pragma once
 
 struct SensorPacket {
-    unsigned long timestamp = 0.0;
+    unsigned long timestamp = 0;
+    unsigned long log_time = 0;
     float pressure = 0.0;
     float temperature = 0.0;
     float gyro_x = 0.0;

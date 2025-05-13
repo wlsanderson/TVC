@@ -9,18 +9,18 @@ uint8_t I2CUtils::read_register(uint8_t reg_addr) {
     Wire.beginTransmission(device_addr);
     Wire.write(reg_addr); 
     Wire.endTransmission(false);
-    Wire.requestFrom(device_addr, 1);
+    Wire.requestFrom((uint8_t)device_addr, (uint8_t)1);
     uint8_t val = Wire.read();
     return val;
 }
 
-void I2CUtils::read_registers(uint8_t reg_addr, uint8_t* buffer, int num_bytes) {
+void I2CUtils::read_registers(uint8_t reg_addr, uint8_t* buffer, size_t num_bytes) {
     Wire.beginTransmission(device_addr);
-    Wire.write(reg_addr); 
+    Wire.write(0x80 | reg_addr); 
     Wire.endTransmission(false);
-    Wire.requestFrom(device_addr, num_bytes);
-    for (int i = 0; i < num_bytes; i++) {
-        buffer[i] = Wire.read();
+    Wire.requestFrom((uint8_t)device_addr, (uint8_t)num_bytes);
+    for (size_t i = 0; i < num_bytes; i++) {
+        *buffer++ = Wire.read();
     }
 }
 
