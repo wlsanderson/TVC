@@ -11,37 +11,7 @@
 class DPS310 {
 public:
     void init();
-    template<typename QueueType>
-    void fetch(QueueType& packet_queue) {
-        
-        // checks if pressure and temp measurements are available
-        uint8_t data_ready = i2c.read_register(MEAS_CFG);
-        
-        // resets the interrupt pins, must be read so that interrupt pin will return to high
-        i2c.read_register(INT_STS);
-
-        SensorPacket packet;
-        packet.timestamp = micros();
-        
-        // bits 4 and 5 are pressure ready and temp ready, respectively
-        if ((data_ready & 0x30) == 0x30) {
-            // pressure measurement
-            uint8_t bytes[3];
-            i2c.read_registers(0x00, bytes, 3);
-            raw_pressure = twos_complement_24(bytes[0], bytes[1], bytes[2]);
-            packet.pressure = calculate_pressure();
-
-            // temperature measurement
-            i2c.read_registers(0x03, bytes, 3);
-            raw_temp = twos_complement_24(bytes[0], bytes[1], bytes[2]);
-            packet.temperature = calculate_temp();
-            
-            if (!packet_queue.full()) {
-                packet_queue.push(packet);
-            }
-        }
-    }
-
+    int fetch(SensorPacket* buffer, unsigned int buffer_index);
 private:
     I2CUtils i2c;
     

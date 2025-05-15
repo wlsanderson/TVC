@@ -11,61 +11,72 @@ void TVCContext::init() {
     }
     SPI.begin();
     Wire.begin();
-    Wire.setClock(dps310_i2c_speed);
+    Wire.setClock(i2c_clock_speed);
 
     // set interrupts
     pinMode(pressure_interrupt_pin, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(pressure_interrupt_pin), pressure_interrupt_handler, FALLING);
-    
     pinMode(imu_interrupt_pin, INPUT_PULLDOWN);
-    attachInterrupt(digitalPinToInterrupt(imu_interrupt_pin), imu_interrupt_handler, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(imu_interrupt_pin), imu_interrupt_handler, RISING);
 
-    imu.init();
-
+    if (!imu.init()) {
+        Serial.println("Context: IMU Initialization Failed!");
+    } else Serial.println("IMU Initialization Successful!");
     pressure_sensor.init();
+    logger.init(sd_card_cs_pin, log_file_size, log_page_size_bytes);
+    Serial.print("Size of buffers: "); Serial.println(log_page_size_bytes / packet_size_bytes);
 }
 
 void TVCContext::update() {
     if (pressure_temp_ready) {
         pressure_temp_ready = false;
-        pressure_sensor.fetch(sensor_packet_queue);
+        
+        if (filling_buffer_1) {
+            next_packet_index = pressure_sensor.fetch(sensor_packet_buffer_1, next_packet_index);
+        } else {
+            next_packet_index = pressure_sensor.fetch(sensor_packet_buffer_2, next_packet_index);
+        }
+        
+        filling_buffer_1 = determine_buffer(next_packet_index);
     }
 
     if (imu_mag_ready) {
         imu_mag_ready = false;
-        imu.fetch_imu_mag(sensor_packet_queue);
-    }
-    
-    while (!sensor_packet_queue.empty()) {
-        SensorPacket packet = sensor_packet_queue.front();
-        Serial.println();
-        Serial.print("P: ");
-        Serial.println(packet.pressure);
-        Serial.print("T: ");
-        Serial.println(packet.temperature);
-
-        Serial.print("Gyro X: ");
-        Serial.println(packet.gyro_x);
-        Serial.print("Gyro Y: ");
-        Serial.println(packet.gyro_y);
-        Serial.print("Gyro Z: ");
-        Serial.println(packet.gyro_z);
-        Serial.print("Accel X: ");
-        Serial.println(packet.acc_x);
-        Serial.print("Accel Y: ");
-        Serial.println(packet.acc_y);
-        Serial.print("Accel Z: ");
-        Serial.println(packet.acc_z);
-        Serial.print("Mag X: ");
-        Serial.println(packet.mag_x);
-        Serial.print("Mag Y: ");
-        Serial.println(packet.mag_y);
-        Serial.print("Mag Z: ");
-        Serial.println(packet.mag_z);
-        sensor_packet_queue.pop();
+        
+        if (filling_buffer_1) {
+            next_packet_index = imu.fetch_imu_mag(sensor_packet_buffer_1, next_packet_index);
+        } else {
+            next_packet_index = imu.fetch_imu_mag(sensor_packet_buffer_2, next_packet_index);
+        }
+        filling_buffer_1 = determine_buffer(next_packet_index);
     }
 
+    if (ready_to_log) {
+        if (filling_buffer_1) {
+            // has already started filling buffer 1, so log the full buffer (buffer 2)
+            logger.log_buffer(sensor_packet_buffer_2, log_page_size_bytes / packet_size_bytes);
+            //Serial.println("logged buffer 2");
+        } else {
+            // already stared filling buffer 2, so log buffer 1
+            logger.log_buffer(sensor_packet_buffer_1, log_page_size_bytes / packet_size_bytes);
+            //Serial.println("logged buffer 1");
+        }
+        Serial.println("logged");
+        ready_to_log = false;
+    }
 }
+
+bool TVCContext::determine_buffer(int next_index) {
+    // if the next index is within bounds of array size, then use the buffer that isnt logging
+    if (next_index < (int)(log_page_size_bytes / packet_size_bytes)) {
+        return filling_buffer_1;
+    }
+    // else, buffer is filled, reset index and start filling next
+    next_packet_index = 0;
+    ready_to_log = true;
+    return !filling_buffer_1;
+}
+
 
 void TVCContext::pressure_interrupt_handler() {
     if (instance) {

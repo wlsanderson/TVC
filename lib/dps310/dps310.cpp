@@ -2,8 +2,7 @@
 
 
 void DPS310::init() {
-    i2c.init(dps310_device_addr, dps310_i2c_speed);
-
+    i2c.init(dps310_device_addr);
     
     uint8_t id = i2c.read_register(ID);
     Serial.print("DPS310 ID (16 expected): ");
@@ -36,6 +35,38 @@ void DPS310::init() {
     get_calibration_coefs();
 }
 
+int DPS310::fetch(SensorPacket* buffer, unsigned int buffer_index) {
+    // checks if pressure and temp measurements are available
+    uint8_t data_ready = i2c.read_register(MEAS_CFG);
+    
+    // resets the interrupt pins, must be read so that interrupt pin will return to high
+    i2c.read_register(INT_STS);
+
+    // returning early if both pressure and temp data isnt ready
+    // bits 4 and 5 are pressure ready and temp ready, respectively
+    if ((data_ready & 0x30) != 0x30) {
+        //Serial.print("DPS: ");
+        //Serial.println(buffer_index);
+        return buffer_index;
+    }
+
+    SensorPacket packet;
+    packet.timestamp = micros();
+
+    // pressure measurement
+    uint8_t bytes[3];
+    i2c.read_registers(0x00, bytes, 3);
+    raw_pressure = twos_complement_24(bytes[0], bytes[1], bytes[2]);
+    packet.pressure = calculate_pressure();
+
+    // temperature measurement
+    i2c.read_registers(0x03, bytes, 3);
+    raw_temp = twos_complement_24(bytes[0], bytes[1], bytes[2]);
+    packet.temperature = calculate_temp();
+
+    buffer[buffer_index] = packet;
+    return ++buffer_index;
+}
 
 
 float DPS310::calculate_pressure() {
