@@ -3,10 +3,10 @@ import csv
 from os import listdir, getcwd
 from os.path import isfile, join 
 
-structsize = 52
-chunk_size = 2048
-byte_format = "<LLfffffffffff"
-header = ['time','logged_time','pressure_pa','temp_c','gyro_x','gyro_y','gyro_z','acc_x','acc_y','acc_z','mag_x','mag_y','mag_z']
+structsize = 48
+chunk_size = 1024
+byte_format = "<Lfffffffffff"
+header = ['time','pressure_pa','temp_c','gyro_x','gyro_y','gyro_z','acc_x','acc_y','acc_z','mag_x','mag_y','mag_z']
 
 
 scripts_dir = join(getcwd(), "scripts")

@@ -1,8 +1,7 @@
 #include <i2c_utils.h>
 
-void I2CUtils::init(uint8_t i2c_device_addr, int i2c_speed_hz) {
+void I2CUtils::init(uint8_t i2c_device_addr) {
     this->device_addr = i2c_device_addr;
-    this->i2c_speed = i2c_speed_hz;
 }
 
 uint8_t I2CUtils::read_register(uint8_t reg_addr) {
@@ -16,11 +15,11 @@ uint8_t I2CUtils::read_register(uint8_t reg_addr) {
 
 void I2CUtils::read_registers(uint8_t reg_addr, uint8_t* buffer, size_t num_bytes) {
     Wire.beginTransmission(device_addr);
-    Wire.write(0x80 | reg_addr); 
+    Wire.write(reg_addr); 
     Wire.endTransmission(false);
     Wire.requestFrom((uint8_t)device_addr, (uint8_t)num_bytes);
     for (size_t i = 0; i < num_bytes; i++) {
-        *buffer++ = Wire.read();
+        buffer[i] = Wire.read();
     }
 }
 

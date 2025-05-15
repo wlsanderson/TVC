@@ -8,10 +8,13 @@
 
 class IMU {
 public:
-    void init();
+    bool init();
     int fetch_imu_mag(SensorPacket* buffer, unsigned int buffer_index);        
 private:
     I2CUtils i2c_imu;
     I2CUtils i2c_mag;
-
+    int16_t imu_data[6];
+    int16_t mag_data[3];
+    bool startup();
+    bool discard();
 };

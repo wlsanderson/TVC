@@ -2,8 +2,7 @@
 
 
 void DPS310::init() {
-    i2c.init(dps310_device_addr, dps310_i2c_speed);
-
+    i2c.init(dps310_device_addr);
     
     uint8_t id = i2c.read_register(ID);
     Serial.print("DPS310 ID (16 expected): ");
@@ -67,8 +66,6 @@ int DPS310::fetch(SensorPacket* buffer, unsigned int buffer_index) {
 
     buffer[buffer_index] = packet;
     return ++buffer_index;
-
-    
 }
 
 

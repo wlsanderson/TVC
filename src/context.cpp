@@ -11,16 +11,17 @@ void TVCContext::init() {
     }
     SPI.begin();
     Wire.begin();
-    Wire.setClock(dps310_i2c_speed);
+    Wire.setClock(i2c_clock_speed);
 
     // set interrupts
     pinMode(pressure_interrupt_pin, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(pressure_interrupt_pin), pressure_interrupt_handler, FALLING);
-    
     pinMode(imu_interrupt_pin, INPUT_PULLDOWN);
-    attachInterrupt(digitalPinToInterrupt(imu_interrupt_pin), imu_interrupt_handler, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(imu_interrupt_pin), imu_interrupt_handler, RISING);
 
-    imu.init();
+    if (!imu.init()) {
+        Serial.println("Context: IMU Initialization Failed!");
+    } else Serial.println("IMU Initialization Successful!");
     pressure_sensor.init();
     logger.init(sd_card_cs_pin, log_file_size, log_page_size_bytes);
     Serial.print("Size of buffers: "); Serial.println(log_page_size_bytes / packet_size_bytes);
@@ -60,6 +61,7 @@ void TVCContext::update() {
             logger.log_buffer(sensor_packet_buffer_1, log_page_size_bytes / packet_size_bytes);
             //Serial.println("logged buffer 1");
         }
+        Serial.println("logged");
         ready_to_log = false;
     }
 }
