@@ -76,8 +76,6 @@ bool IMU::init() {
     Can route the FIFO threshold flag in FIFO_SRC to the INT1_A/G interrupt pin by writing in
     register INT1_CTRL INT1_FTH=1.
     */
-        // TODO: 0x08 is FIFO threshold interrupt, but it doesnt work with the way I am fetching
-        // data because I am only fetching 1 packet at a time
     i2c_imu.write_register(INT1_CTRL, 0x08); 
 
 
@@ -97,53 +95,29 @@ int IMU::fetch_imu_mag(SensorPacket* buffer, unsigned int buffer_index) {
     SensorPacket packet;
     bool has_data = false;
     if (fifo) {
-        // fetching both accel and gyro
-        
-        // read gyro and accel
-        // uint8_t bytes[12];
-        // i2c_imu.read_registers(OUT_X_G, bytes, 12);
-        // int16_t gx = twos_complement_16(bytes[1], bytes[0]);
-        // int16_t gy = twos_complement_16(bytes[3], bytes[2]);
-        // int16_t gz = twos_complement_16(bytes[5], bytes[4]);
-        // int16_t ax = twos_complement_16(bytes[7], bytes[6]);
-        // int16_t ay = twos_complement_16(bytes[9], bytes[8]);
-        // int16_t az = twos_complement_16(bytes[11], bytes[10]);
-        // packet.gyro_x = (float)(gx) * gyro_scale_factor;
-        // packet.gyro_y = (float)(gy) * gyro_scale_factor;
-        // packet.gyro_z = (float)(gz) * gyro_scale_factor;
-        // packet.acc_x = (float)(ax) * acc_scale_factor;
-        // packet.acc_y = (float)(ay) * acc_scale_factor;
-        // packet.acc_z = (float)(az) * acc_scale_factor;
-        //Serial.println(fifo & 0x3F);
+        // clearing out the entire fifo, only logging most recent packet though
+        uint8_t overrun = 0; // kill infinite loop if i2c not fast enough
         while (fifo) {
+            hold_interrupt = true;
             i2c_imu.read_registers(OUT_X_G, (uint8_t*)imu_data, 12);
+            hold_interrupt = false;
             fifo = i2c_imu.read_register(FIFO_SRC);
-        }
-        packet.gyro_x = (float)(imu_data[0]) * gyro_scale_factor;
-        packet.gyro_y = (float)(imu_data[1]) * gyro_scale_factor;
-        packet.gyro_z = (float)(imu_data[2]) * gyro_scale_factor;
-        packet.acc_x = (float)(imu_data[3]) * acc_scale_factor;
-        packet.acc_y = (float)(imu_data[4]) * acc_scale_factor;
-        packet.acc_z = (float)(imu_data[5]) * acc_scale_factor;
-        packet.timestamp = micros();
-        has_data = true;
+            overrun++;
 
-        //Serial.println(millis());
-        // if (abs(packet.acc_x) > 0.000000015) {
-        //     Serial.print(bytes[7],BIN);
-        //     Serial.print(" ");
-        //     Serial.println(bytes[6], BIN);
-        // }
-        // if(abs(packet.acc_x) > 0.15) {
-        //     //Serial.print(bytes[7],BIN);
-        //     Serial.print(" x ");
-        //     Serial.println(data[0], BIN);
-        // }
-        // if(abs(packet.acc_y) > 0.15) {
-        //     //Serial.print(bytes[9],BIN);
-        //     Serial.print(" y ");
-        //     Serial.println(data[1], BIN);
-        // }
+            if (overrun > 64) {
+                Serial.println("LSM9DS1: ERROR - Can't read samples fast enough!");
+                break;
+            }
+        }
+        packet.timestamp = micros();
+        packet.gyro_x = imu_data[0];
+        packet.gyro_y = imu_data[1];
+        packet.gyro_z = imu_data[2];
+        packet.acc_x = imu_data[3];
+        packet.acc_y = imu_data[4];
+        packet.acc_z = imu_data[5];
+        
+        has_data = true;
     }
     
     uint8_t mag_data_ready = i2c_mag.read_register(STATUS_REG_M);
@@ -231,19 +205,19 @@ bool IMU::discard() {
             break;
         case IMU_119Hz:
             num_cycles = 3;
-            delay_time = 50;
+            delay_time = 20;
             break;
         case IMU_238Hz:
             num_cycles = 5;
-            delay_time = 25;
+            delay_time = 8;
             break;
         case IMU_476Hz:
             num_cycles = 8;
-            delay_time = 25;
+            delay_time = 4;
             break;
         case IMU_952Hz:
             num_cycles = 15;
-            delay_time = 25;
+            delay_time = 3;
             break;
     }
     if (num_cycles == 0) {

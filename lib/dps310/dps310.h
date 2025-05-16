@@ -18,7 +18,7 @@ private:
     float calculate_pressure();
     float calculate_temp();
     void get_calibration_coefs();
-
+    uint8_t bytes[6];
     int raw_temp = 0.0;
     int raw_pressure = 0.0;
     int16_t c0;

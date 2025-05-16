@@ -41,6 +41,7 @@ void TVCContext::update() {
     }
 
     if (imu_mag_ready) {
+
         imu_mag_ready = false;
         
         if (filling_buffer_1) {
@@ -48,10 +49,12 @@ void TVCContext::update() {
         } else {
             next_packet_index = imu.fetch_imu_mag(sensor_packet_buffer_2, next_packet_index);
         }
-        filling_buffer_1 = determine_buffer(next_packet_index);
-    }
 
+        filling_buffer_1 = determine_buffer(next_packet_index);
+
+    }
     if (ready_to_log) {
+    
         if (filling_buffer_1) {
             // has already started filling buffer 1, so log the full buffer (buffer 2)
             logger.log_buffer(sensor_packet_buffer_2, log_page_size_bytes / packet_size_bytes);
@@ -95,5 +98,7 @@ void TVCContext::imu_interrupt_handler() {
 }
 
 void TVCContext::handle_imu_interrupt() {
-    imu_mag_ready = true;
+    if (!imu.hold_interrupt) {
+        imu_mag_ready = true;
+    }
 }

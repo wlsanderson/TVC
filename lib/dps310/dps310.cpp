@@ -52,18 +52,13 @@ int DPS310::fetch(SensorPacket* buffer, unsigned int buffer_index) {
 
     SensorPacket packet;
     packet.timestamp = micros();
-
-    // pressure measurement
-    uint8_t bytes[3];
-    i2c.read_registers(0x00, bytes, 3);
+    // burst read measurements (pressure then temp)
+    i2c.read_registers(0x00, bytes, 6);
     raw_pressure = twos_complement_24(bytes[0], bytes[1], bytes[2]);
+    raw_temp = twos_complement_24(bytes[3], bytes[4], bytes[5]);
     packet.pressure = calculate_pressure();
-
-    // temperature measurement
-    i2c.read_registers(0x03, bytes, 3);
-    raw_temp = twos_complement_24(bytes[0], bytes[1], bytes[2]);
     packet.temperature = calculate_temp();
-
+    
     buffer[buffer_index] = packet;
     return ++buffer_index;
 }

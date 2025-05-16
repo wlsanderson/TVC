@@ -21,22 +21,14 @@ void Logger::init(int CS_pin, int log_file_size, int page_size_bytes) {
     } else {
         Serial.println("Could not preallocate file");
     }
-    delay(500); // preallocation can take a while
+    delay(200); // preallocation can take a while
     file.close();
 }
 
 void Logger::log_buffer(SensorPacket* buffer, int buffer_length) {
+
     size_t data_size = sizeof(SensorPacket) * buffer_length;
-    // Serial.println();
-    // for (int i = 0; i < buffer_length; i++) {
-    //     Serial.print(buffer[i].timestamp);
-    //     Serial.print("\t");
-    //     Serial.print(buffer[i].pressure);
-    //     Serial.print("\t");
-    //     Serial.print(buffer[i].gyro_x);
-    //     Serial.print("\t");
-    //     Serial.println(buffer[i].mag_x);
-    // }
+
     if (data_size > page_size) {
         Serial.println("Logger: Buffer size is larger than intended page size!");
         return;
@@ -47,10 +39,11 @@ void Logger::log_buffer(SensorPacket* buffer, int buffer_length) {
 
     // pad remaining bytes
     if (data_size < page_size) {
+        Serial.println("buffering");
         memset(buffer_block + data_size, 0xFF, page_size - data_size);
     }
     if (!file.open(log_name, O_WRITE)) {
-        //Serial.println("Logger: Failed to open log file");
+        Serial.println("Logger: Failed to open log file");
         return;
     }
     file.seekSet(write_position);
