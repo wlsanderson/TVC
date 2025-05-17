@@ -1,8 +1,9 @@
 #include <dps310.h>
 
+DPS310::DPS310(uint8_t i2c_address) : address {i2c_address} {}
 
 void DPS310::init() {
-    i2c.init(dps310_device_addr);
+    i2c.init(address);
     
     uint8_t id = i2c.read_register(ID);
     Serial.print("DPS310 ID (16 expected): ");
@@ -17,7 +18,7 @@ void DPS310::init() {
     i2c.write_register(CFG_REG, 0b00110000);
 
     // 0 if using ASIC temperature sensor, 1 if using MEMS element temp sensor 
-    const uint8_t TMP_COEF_SRCE = i2c.read_register(0x28) >> 7;
+    uint8_t TMP_COEF_SRCE = i2c.read_register(0x28) >> 7;
 
     i2c.write_register(PRS_CFG, 0b01110000); // sets to 128hz, no oversampling
 
@@ -35,7 +36,7 @@ void DPS310::init() {
     get_calibration_coefs();
 }
 
-int DPS310::fetch(SensorPacket* buffer, unsigned int buffer_index) {
+size_t DPS310::fetch(SensorPacket* buffer, size_t buffer_index) {
     // checks if pressure and temp measurements are available
     uint8_t data_ready = i2c.read_register(MEAS_CFG);
     

@@ -88,7 +88,6 @@ enum MAG_ODR {
 };
 
 // LSM9DS1 Registers
-constexpr uint8_t imu_addr = 0x6B; // i2c address
 constexpr uint8_t WHO_AM_I = 0x0F;
 constexpr uint8_t INT1_CTRL = 0x0C; // interrupt pin 1 config
 constexpr uint8_t CTRL_REG1_G = 0x10;
@@ -104,7 +103,6 @@ constexpr uint8_t FIFO_SRC = 0x2F;
 constexpr uint8_t OUT_TEMP = 0x15; // start of burst read for temperature
 constexpr uint8_t OUT_X_G = 0x18; // start of burst read for acc + gyro
 
-constexpr uint8_t mag_addr = 0x1E; // i2c address
 constexpr uint8_t WHO_AM_I_M = 0x0F;
 constexpr uint8_t CTRL_REG1_M = 0x20;
 constexpr uint8_t CTRL_REG2_M = 0x21;

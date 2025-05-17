@@ -10,11 +10,12 @@
 
 class DPS310 {
 public:
+    DPS310(uint8_t i2c_address);
     void init();
-    int fetch(SensorPacket* buffer, unsigned int buffer_index);
+    size_t fetch(SensorPacket* buffer, unsigned int buffer_index);
 private:
     I2CUtils i2c;
-    
+    uint8_t address;
     float calculate_pressure();
     float calculate_temp();
     void get_calibration_coefs();

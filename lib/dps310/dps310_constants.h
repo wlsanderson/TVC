@@ -15,9 +15,8 @@ constexpr uint8_t INT_STS = 0x0A;
 constexpr uint8_t FIFO_STS = 0x0B;
 
 // DPS310 Constants
-constexpr uint8_t dps310_device_addr = 0x77;
-constexpr int NUM_ADDR_COEFS = 18; // number of calibration coefficient addresses for DPS310 
-constexpr int NUM_COEFS = 9; // number of calibration coefficients for DPS310
+constexpr size_t NUM_ADDR_COEFS = 18; // number of calibration coefficient addresses for DPS310 
+constexpr size_t NUM_COEFS = 9; // number of calibration coefficients for DPS310
 constexpr int kP = 524288;
 constexpr int kT = 524288;
-constexpr int dps310_sensor_buffer = 32; // the internal fifo stores 32 shared pressure/temp slots
+constexpr size_t dps310_sensor_buffer = 32; // the internal fifo stores 32 shared pressure/temp slots

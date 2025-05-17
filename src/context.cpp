@@ -2,8 +2,18 @@
 
 TVCContext* TVCContext::instance = nullptr;
 
-void TVCContext::init() {
+TVCContext::TVCContext()
+    : pressure_sensor{0x77},
+    imu{0x6B, 0x1E},
+    logger{sd_card_cs_pin, log_file_size, log_page_size_bytes},
+    ukf{ukf_number_of_states, alpha_coefficient, beta_coefficient, kappa_coefficient} {
+    
     instance = this;
+}
+
+
+
+void TVCContext::init() {
     // setup Serial, SPI, I2C, pinouts
     Serial.begin(9600);
     while (!Serial) {
@@ -23,7 +33,7 @@ void TVCContext::init() {
         Serial.println("Context: IMU Initialization Failed!");
     } else Serial.println("IMU Initialization Successful!");
     pressure_sensor.init();
-    logger.init(sd_card_cs_pin, log_file_size, log_page_size_bytes);
+    logger.init();
     Serial.print("Size of buffers: "); Serial.println(log_page_size_bytes / packet_size_bytes);
 }
 
@@ -69,9 +79,9 @@ void TVCContext::update() {
     }
 }
 
-bool TVCContext::determine_buffer(int next_index) {
+bool TVCContext::determine_buffer(size_t next_index) {
     // if the next index is within bounds of array size, then use the buffer that isnt logging
-    if (next_index < (int)(log_page_size_bytes / packet_size_bytes)) {
+    if (next_index < (log_page_size_bytes / packet_size_bytes)) {
         return filling_buffer_1;
     }
     // else, buffer is filled, reset index and start filling next

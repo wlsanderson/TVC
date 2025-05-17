@@ -1,10 +1,13 @@
 #include <lsm9ds1.h>
 #include <etl/queue.h>
 
+IMU::IMU(uint8_t lsm9ds1_imu_address, uint8_t lsm9ds1_mag_address)
+    : imu_address {lsm9ds1_imu_address},
+    mag_address {lsm9ds1_mag_address} {}
 
 bool IMU::init() {
-    i2c_imu.init(imu_addr);
-    i2c_mag.init(mag_addr);
+    i2c_imu.init(imu_address);
+    i2c_mag.init(mag_address);
     delay(200);
     if (!startup()) {
         return false;
@@ -89,14 +92,14 @@ bool IMU::init() {
 }
 
 
-int IMU::fetch_imu_mag(SensorPacket* buffer, unsigned int buffer_index) {
+size_t IMU::fetch_imu_mag(SensorPacket* buffer, unsigned int buffer_index) {
     // bits 0 and 1 are new accelerometer data and new gyro data, respectively
     uint8_t fifo = i2c_imu.read_register(FIFO_SRC);
     SensorPacket packet;
     bool has_data = false;
     if (fifo) {
         // clearing out the entire fifo, only logging most recent packet though
-        uint8_t overrun = 0; // kill infinite loop if i2c not fast enough
+        size_t overrun = 0; // kill infinite loop if i2c not fast enough
         while (fifo) {
             hold_interrupt = true;
             i2c_imu.read_registers(OUT_X_G, (uint8_t*)imu_data, 12);
@@ -159,7 +162,7 @@ bool IMU::startup() {
     // reboot + reset IMU to default registers
     i2c_imu.write_register(CTRL_REG8, 0x81 | i2c_imu.read_register(CTRL_REG8));
     bool imu_booted = false;
-    for (uint8_t i = 0; i < 5; i++) {
+    for (size_t i = 0; i < 5; i++) {
         // check if default bits set
         if ((i2c_imu.read_register(WHO_AM_I) != 0x68)) {
             Serial.println("LSM9DS1 IMU: Booting...");
@@ -172,7 +175,7 @@ bool IMU::startup() {
     // reboot + reset magnetometer to default registers
     i2c_mag.write_register(CTRL_REG2_M, 0x0C | i2c_mag.read_register(CTRL_REG2_M));
     bool mag_booted = false;
-    for (uint8_t i = 0; i < 5; i++) {
+    for (size_t i = 0; i < 5; i++) {
         // check if default bits set
         if ((i2c_mag.read_register(WHO_AM_I_M) != 0x3D)) {
             Serial.println("LSM9DS1 Mag: Booting...");
@@ -189,9 +192,9 @@ bool IMU::startup() {
 }
 
 bool IMU::discard() {
-    uint8_t imu_hz = (i2c_imu.read_register(CTRL_REG1_G) & 0xE0) >> 5;
-    uint8_t num_cycles = 0;
-    uint8_t delay_time = 0;
+    int imu_hz = (i2c_imu.read_register(CTRL_REG1_G) & 0xE0) >> 5;
+    size_t num_cycles = 0;
+    int delay_time = 0;
     switch (imu_hz) {
         case IMU_PD:
             return false; // IMU should not be powered down at this point

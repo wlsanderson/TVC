@@ -1,9 +1,11 @@
 #include "sd_logger.h"
 #include "sd_logger_constants.h"
 
-void Logger::init(int CS_pin, int log_file_size, int page_size_bytes) {
-    page_size = page_size_bytes;
-    if (!SD.sdfs.begin(SdSpiConfig(CS_pin, DEDICATED_SPI, SD_SCK_MHZ(24)))) {
+Logger::Logger(int logger_cs_pin, size_t log_file_size, size_t log_page_size_bytes)
+    : cs_pin {logger_cs_pin}, file_size {log_file_size}, page_size {log_page_size_bytes} {}
+
+void Logger::init() {
+    if (!SD.sdfs.begin(SdSpiConfig(cs_pin, DEDICATED_SPI, SD_SCK_MHZ(24)))) {
         Serial.println("SD card initialization failed");
         return;
     }
@@ -16,8 +18,8 @@ void Logger::init(int CS_pin, int log_file_size, int page_size_bytes) {
     }
 
     file = SD.sdfs.open(log_name, O_WRITE | O_CREAT);
-    if (file.preAllocate(log_file_size*1024*1024)) {
-        Serial.print("Preallocated log file with "); Serial.print(log_file_size); Serial.println(" Mb");
+    if (file.preAllocate(file_size * 1024 * 1024)) {
+        Serial.print("Preallocated log file with "); Serial.print(file_size); Serial.println(" Mb");
     } else {
         Serial.println("Could not preallocate file");
     }
