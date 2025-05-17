@@ -5,7 +5,6 @@
 #include <sd_logger.h>
 #include <quat_ukf.h>
 #include <sensor_packet.h>
-#include <etl/queue.h>
 
 #include "constants.h"
 
@@ -13,14 +12,16 @@
 class TVCContext {
 public:
     TVCContext();
-    void init();
+    int begin();
     void update();
 private:
     DPS310 pressure_sensor;
     IMU imu;
     Logger logger;
-    QuatUKF ukf;
+    QuatUKF<ukf_number_of_states, ukf_number_of_measurements> ukf;
 
+    int first_fetch();
+    SensorPacket first_fetch_buffer[2];
 
     // double buffer for logging
     SensorPacket sensor_packet_buffer_1[log_page_size_bytes / packet_size_bytes];

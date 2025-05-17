@@ -149,7 +149,7 @@
     
 
 //     std::queue<SensorPacket> packet_queue;
-//     mock_dps310.init();
+//     mock_dps310.begin();
 //     mock_dps310.fetch(packet_queue);
 
 //     SensorPacket packet = packet_queue.front();

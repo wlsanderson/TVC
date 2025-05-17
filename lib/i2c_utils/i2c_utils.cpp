@@ -1,6 +1,6 @@
 #include <i2c_utils.h>
 
-void I2CUtils::init(uint8_t i2c_device_addr) {
+void I2CUtils::begin(uint8_t i2c_device_addr) {
     this->device_addr = i2c_device_addr;
 }
 

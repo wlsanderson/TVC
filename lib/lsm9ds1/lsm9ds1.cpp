@@ -1,16 +1,15 @@
 #include <lsm9ds1.h>
-#include <etl/queue.h>
 
 IMU::IMU(uint8_t lsm9ds1_imu_address, uint8_t lsm9ds1_mag_address)
     : imu_address {lsm9ds1_imu_address},
     mag_address {lsm9ds1_mag_address} {}
 
-bool IMU::init() {
-    i2c_imu.init(imu_address);
-    i2c_mag.init(mag_address);
+int IMU::begin() {
+    i2c_imu.begin(imu_address);
+    i2c_mag.begin(mag_address);
     delay(200);
-    if (!startup()) {
-        return false;
+    if (startup()) {
+        return 1;
     }
 
     /* Enable block data update */
@@ -84,11 +83,11 @@ bool IMU::init() {
 
 
     // discard samples so that the first few are clean
-    if (!discard()) {
+    if (discard()) {
         Serial.println("LSM9DS1: Sample discard failed!");
-        return false;
+        return 1;
     }
-    return true;
+    return 0;
 }
 
 
@@ -131,9 +130,9 @@ size_t IMU::fetch_imu_mag(SensorPacket* buffer, unsigned int buffer_index) {
         }
         i2c_mag.read_registers(OUT_X_L_M, (uint8_t*)mag_data, 6);
 
-        packet.mag_x = (float)(mag_data[0]) * mag_scale_factor;
-        packet.mag_y = (float)(mag_data[1]) * mag_scale_factor;
-        packet.mag_z = (float)(mag_data[2]) * mag_scale_factor;
+        packet.mag_x = mag_data[0];
+        packet.mag_y = mag_data[1];
+        packet.mag_z = mag_data[2];
         has_data = true;
     }
     
@@ -148,15 +147,15 @@ size_t IMU::fetch_imu_mag(SensorPacket* buffer, unsigned int buffer_index) {
     return buffer_index;
 }
 
-bool IMU::startup() {
+int IMU::startup() {
     // check for proper connections and i2c by reading ID
     if (i2c_imu.read_register(WHO_AM_I) != 0x68) {
         Serial.println("Could not detect LSM9DS1 IMU");
-        return false;
+        return 1;
     }
     if (i2c_mag.read_register(WHO_AM_I_M) != 0x3D) {
         Serial.println("Could not detect LSM9DS1 Magnetometer");
-        return false;
+        return 1;
     }
 
     // reboot + reset IMU to default registers
@@ -186,18 +185,18 @@ bool IMU::startup() {
         }
     }
     if (!(imu_booted && mag_booted)) {
-        return false;
+        return 1;
     }
-    return true;
+    return 0;
 }
 
-bool IMU::discard() {
+int IMU::discard() {
     int imu_hz = (i2c_imu.read_register(CTRL_REG1_G) & 0xE0) >> 5;
     size_t num_cycles = 0;
     int delay_time = 0;
     switch (imu_hz) {
         case IMU_PD:
-            return false; // IMU should not be powered down at this point
+            return 1; // IMU should not be powered down at this point
         case IMU_14Hz9:
             num_cycles = 1;
             delay_time = 100;
@@ -224,7 +223,7 @@ bool IMU::discard() {
             break;
     }
     if (num_cycles == 0) {
-        return false;
+        return 1;
     }
     
     // loop read
@@ -235,5 +234,5 @@ bool IMU::discard() {
         i2c_mag.read_registers(OUT_X_L_M, (uint8_t*)bytes_mag, sizeof(bytes_mag));
         delay(delay_time);
     }
-    return true;
+    return 0;
 }

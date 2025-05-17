@@ -4,7 +4,7 @@
 Logger::Logger(int logger_cs_pin, size_t log_file_size, size_t log_page_size_bytes)
     : cs_pin {logger_cs_pin}, file_size {log_file_size}, page_size {log_page_size_bytes} {}
 
-void Logger::init() {
+void Logger::begin() {
     if (!SD.sdfs.begin(SdSpiConfig(cs_pin, DEDICATED_SPI, SD_SCK_MHZ(24)))) {
         Serial.println("SD card initialization failed");
         return;

@@ -20,7 +20,7 @@ class SPIUtils {
         BitOrder bit_order;
         int spi_mode;
 
-        void init(int spi_speed, uint8_t read_byte, int spi_mode, BitOrder bit_order, int CS_pin);
+        void begin(int spi_speed, uint8_t read_byte, int spi_mode, BitOrder bit_order, int CS_pin);
 
         uint8_t read_register(uint8_t addr);
         void read_registers(uint8_t start_addr, uint8_t* buffer, int num_bytes);

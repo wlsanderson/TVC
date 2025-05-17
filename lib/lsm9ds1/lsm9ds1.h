@@ -9,7 +9,7 @@
 class IMU {
 public:
     IMU(uint8_t lsm9ds1_imu_address, uint8_t lsm9ds1_mag_address);
-    bool init();
+    int begin();
     size_t fetch_imu_mag(SensorPacket* buffer, size_t buffer_index);
     bool hold_interrupt = false;
 private:
@@ -19,6 +19,6 @@ private:
     I2CUtils i2c_mag;
     int16_t imu_data[6];
     int16_t mag_data[3];
-    bool startup();
-    bool discard();
+    int startup();
+    int discard();
 };

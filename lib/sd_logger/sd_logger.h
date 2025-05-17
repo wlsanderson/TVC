@@ -6,7 +6,7 @@ class Logger {
 public:
     Logger(int logger_cs_pin, size_t log_file_size, size_t log_page_size_bytes);
     void log_buffer(SensorPacket* buffer, int buffer_elements);
-    void init();
+    void begin();
 private:
     const int cs_pin;
     const size_t file_size;

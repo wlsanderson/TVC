@@ -2,8 +2,8 @@
 
 DPS310::DPS310(uint8_t i2c_address) : address {i2c_address} {}
 
-void DPS310::init() {
-    i2c.init(address);
+void DPS310::begin() {
+    i2c.begin(address);
     
     uint8_t id = i2c.read_register(ID);
     Serial.print("DPS310 ID (16 expected): ");
@@ -34,6 +34,10 @@ void DPS310::init() {
     i2c.write_register(0x0C, 0x80);
     i2c.read_register(INT_STS);
     get_calibration_coefs();
+
+    // ignore first measurement
+    delay(300);
+    i2c.read_registers(0x00, bytes, 6);
 }
 
 size_t DPS310::fetch(SensorPacket* buffer, size_t buffer_index) {

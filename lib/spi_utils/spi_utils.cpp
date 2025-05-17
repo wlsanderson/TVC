@@ -1,7 +1,7 @@
 #include "spi_utils.h"
 
 
-void SPIUtils::init(int spi_speed_hz, uint8_t spi_read_byte, int mode, BitOrder spi_bit_order, int spi_CS_pin) {
+void SPIUtils::begin(int spi_speed_hz, uint8_t spi_read_byte, int mode, BitOrder spi_bit_order, int spi_CS_pin) {
     this->spi_speed = spi_speed_hz;
     this->read_byte = spi_read_byte;
     this->spi_mode = mode;

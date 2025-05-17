@@ -4,7 +4,11 @@
 TVCContext context;
 
 void setup() {
-    context.init();
+    int error_status = context.begin();
+    if (error_status) {
+        Serial.println("Program stopped");
+        while (1) {}
+    }
 }
 
 void loop() {

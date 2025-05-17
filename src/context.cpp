@@ -6,14 +6,12 @@ TVCContext::TVCContext()
     : pressure_sensor{0x77},
     imu{0x6B, 0x1E},
     logger{sd_card_cs_pin, log_file_size, log_page_size_bytes},
-    ukf{ukf_number_of_states, alpha_coefficient, beta_coefficient, kappa_coefficient} {
+    ukf{alpha_coefficient, beta_coefficient, kappa_coefficient} {
     
     instance = this;
 }
 
-
-
-void TVCContext::init() {
+int TVCContext::begin() {
     // setup Serial, SPI, I2C, pinouts
     Serial.begin(9600);
     while (!Serial) {
@@ -29,12 +27,33 @@ void TVCContext::init() {
     pinMode(imu_interrupt_pin, INPUT_PULLDOWN);
     attachInterrupt(digitalPinToInterrupt(imu_interrupt_pin), imu_interrupt_handler, RISING);
 
-    if (!imu.init()) {
+    if (imu.begin()) {
         Serial.println("Context: IMU Initialization Failed!");
+        return 1;
     } else Serial.println("IMU Initialization Successful!");
-    pressure_sensor.init();
-    logger.init();
-    Serial.print("Size of buffers: "); Serial.println(log_page_size_bytes / packet_size_bytes);
+    pressure_sensor.begin();
+    logger.begin();
+    
+    switch (first_fetch()) {
+        case 0:
+            break;
+        case 1:
+            Serial.println("Fetching first IMU packet failed!");
+            return 1;
+        case 2:
+            Serial.println("Fetching first pressure/temp packet failed!");
+            return 1;
+        default:
+            Serial.println("First fetch had an unexpected error!");
+            return 1;
+    }
+
+    if (ukf.begin(first_fetch_buffer[1].pressure, first_fetch_buffer[0].acc_x, first_fetch_buffer[0].acc_y, first_fetch_buffer[0].acc_z, first_fetch_buffer[0].mag_x, first_fetch_buffer[0].mag_y, first_fetch_buffer[0].mag_z)) {
+        Serial.println("UKF startup failed!");
+        return 1;
+    }
+    return 0;
+
 }
 
 void TVCContext::update() {
@@ -77,6 +96,19 @@ void TVCContext::update() {
         Serial.println("logged");
         ready_to_log = false;
     }
+}
+
+int TVCContext::first_fetch() {
+    delay(500); // wait to ensure both sensors are ready
+    int idx = imu.fetch_imu_mag(first_fetch_buffer, 0);
+    if (idx != 1) {
+        return 1;
+    }
+    idx = pressure_sensor.fetch(first_fetch_buffer, idx);
+    if (idx != 2) {
+        return 2;
+    }
+    return 0;
 }
 
 bool TVCContext::determine_buffer(size_t next_index) {

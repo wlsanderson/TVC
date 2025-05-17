@@ -10,8 +10,8 @@
 
 class DPS310 {
 public:
-    DPS310(uint8_t i2c_address);
-    void init();
+    explicit DPS310(uint8_t i2c_address);
+    void begin();
     size_t fetch(SensorPacket* buffer, unsigned int buffer_index);
 private:
     I2CUtils i2c;
