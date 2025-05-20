@@ -114,10 +114,10 @@ size_t IMU::fetch_imu_mag(SensorPacket* buffer, unsigned int buffer_index) {
         packet.timestamp = micros();
         packet.gyro_x = imu_data[0];
         packet.gyro_y = imu_data[1];
-        packet.gyro_z = imu_data[2];
+        packet.gyro_z = -imu_data[2];
         packet.acc_x = imu_data[3];
         packet.acc_y = imu_data[4];
-        packet.acc_z = imu_data[5];
+        packet.acc_z = -imu_data[5];
         
         has_data = true;
     }
@@ -130,9 +130,9 @@ size_t IMU::fetch_imu_mag(SensorPacket* buffer, unsigned int buffer_index) {
         }
         i2c_mag.read_registers(OUT_X_L_M, (uint8_t*)mag_data, 6);
 
-        packet.mag_x = mag_data[0];
+        packet.mag_x = -mag_data[0];
         packet.mag_y = mag_data[1];
-        packet.mag_z = mag_data[2];
+        packet.mag_z = -mag_data[2];
         has_data = true;
     }
     

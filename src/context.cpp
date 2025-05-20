@@ -57,31 +57,8 @@ int TVCContext::begin() {
 }
 
 void TVCContext::update() {
-    if (pressure_temp_ready) {
-        pressure_temp_ready = false;
-        
-        if (filling_buffer_1) {
-            next_packet_index = pressure_sensor.fetch(sensor_packet_buffer_1, next_packet_index);
-        } else {
-            next_packet_index = pressure_sensor.fetch(sensor_packet_buffer_2, next_packet_index);
-        }
-        
-        filling_buffer_1 = determine_buffer(next_packet_index);
-    }
+    query_sensors();
 
-    if (imu_mag_ready) {
-
-        imu_mag_ready = false;
-        
-        if (filling_buffer_1) {
-            next_packet_index = imu.fetch_imu_mag(sensor_packet_buffer_1, next_packet_index);
-        } else {
-            next_packet_index = imu.fetch_imu_mag(sensor_packet_buffer_2, next_packet_index);
-        }
-
-        filling_buffer_1 = determine_buffer(next_packet_index);
-
-    }
     if (ready_to_log) {
     
         if (filling_buffer_1) {
@@ -122,6 +99,46 @@ bool TVCContext::determine_buffer(size_t next_index) {
     return !filling_buffer_1;
 }
 
+int TVCContext::query_sensors() {
+    int start_index = next_packet_index;
+    if (pressure_temp_ready) {
+        pressure_temp_ready = false;
+        
+        if (filling_buffer_1) {
+            next_packet_index = pressure_sensor.fetch(sensor_packet_buffer_1, next_packet_index);
+            combine_packet(sensor_packet_buffer_1[next_packet_index - 1]);
+        } else {
+            next_packet_index = pressure_sensor.fetch(sensor_packet_buffer_2, next_packet_index);
+            combine_packet(sensor_packet_buffer_2[next_packet_index - 1]);
+        }
+        
+        filling_buffer_1 = determine_buffer(next_packet_index);
+    }
+
+    if (imu_mag_ready) {
+
+        imu_mag_ready = false;
+        
+        if (filling_buffer_1) {
+            next_packet_index = imu.fetch_imu_mag(sensor_packet_buffer_1, next_packet_index);
+            combine_packet(sensor_packet_buffer_1[next_packet_index - 1]);
+        } else {
+            next_packet_index = imu.fetch_imu_mag(sensor_packet_buffer_2, next_packet_index);
+            combine_packet(sensor_packet_buffer_2[next_packet_index - 1]);
+        }
+
+        filling_buffer_1 = determine_buffer(next_packet_index);
+    }
+    // returns the number of new packets
+    return next_packet_index - start_index;
+}
+
+/**
+ * Method should take data from the latest packet in the buffer and create a packet to be sent to ukf.
+ */
+void combine_packet(SensorPacket* buffer) {
+
+}
 
 void TVCContext::pressure_interrupt_handler() {
     if (instance) {

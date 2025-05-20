@@ -21,6 +21,7 @@ private:
     QuatUKF<ukf_number_of_states, ukf_number_of_measurements> ukf;
 
     int first_fetch();
+    int query_sensors();
     SensorPacket first_fetch_buffer[2];
 
     // double buffer for logging
@@ -30,6 +31,7 @@ private:
     bool filling_buffer_1 = true;
     bool ready_to_log = false;
     bool determine_buffer(size_t next_index);
+    SensorPacket packet_to_process;
 
     static TVCContext* instance;  // for interrupt handling
     static void pressure_interrupt_handler();  // static ISR proxy
@@ -38,5 +40,6 @@ private:
     void handle_imu_interrupt();  // sets data ready flag
     volatile bool pressure_temp_ready = false;
     volatile bool imu_mag_ready = false;
+    void combine_packet(SensorPacket* buffer);
     
 };

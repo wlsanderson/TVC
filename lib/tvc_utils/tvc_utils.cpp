@@ -1,4 +1,5 @@
-#include <stdint.h>
+#include <tvc_utils.h>
+#include <Arduino.h>
 
 int16_t twos_complement_12_hi(uint8_t msb_8, uint8_t lsb_4) {
     if (lsb_4 & 0xF0) lsb_4 >>= 4;
@@ -31,3 +32,16 @@ int32_t twos_complement_24(uint8_t msb, uint8_t lsb, uint8_t xlsb) {
     return val;
 }
 
+Vector4d acc_mag_to_quat(Vector3d acc, Vector3d mag) {
+    Vector3d north = (acc.cross(mag)).cross(acc);
+    Vector3d east = acc.cross(mag);
+    Vector3d down = acc;
+    Matrix3d rotmat;
+    rotmat.col(0) = north.normalized();
+    rotmat.col(1) = east.normalized();
+    rotmat.col(2) = down.normalized();
+    rotmat.transposeInPlace();
+    Quaterniond quat(rotmat);
+    Vector4d ret(quat.w(), quat.x(), quat.y(), quat.z());
+    return ret;
+}
